@@ -3,7 +3,7 @@
 
 namespace mos6502
 {
-enum class Status : std::uint8_t {
+enum Status : std::uint8_t {
     N = 1 << 7, /// Negative
     V = 1 << 6, /// Overflow
     U = 1 << 5, /// Unused

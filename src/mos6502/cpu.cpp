@@ -67,6 +67,14 @@ public:
         {
             m_dispatch[i] = &Cpu::Impl::illegal;
         }
+
+        m_dispatch[0x18] = &Cpu::Impl::clc;
+        m_dispatch[0xD8] = &Cpu::Impl::cld;
+        m_dispatch[0x58] = &Cpu::Impl::cli;
+        m_dispatch[0xB8] = &Cpu::Impl::clv;
+        m_dispatch[0x38] = &Cpu::Impl::sec;
+        m_dispatch[0xF8] = &Cpu::Impl::sed;
+        m_dispatch[0x78] = &Cpu::Impl::sei;
     }
 
     Registers& regs()
@@ -92,8 +100,32 @@ private:
         throw std::runtime_error("Illegal instruction hit!");
     }
 
+    void clc() {
+        m_regs.sr &= ~Status::C;
+    }
+
+    void cld() {
+        m_regs.sr &= ~Status::D;
+    }
+
+    void cli() {
+        m_regs.sr &= ~Status::I;
+    }
+
+    void clv() {
+        m_regs.sr &= ~Status::V;
+    }
+
+    void sec() {
+        m_regs.sr |= Status::C;
+    }
+
+    void sed() {
+        m_regs.sr |= Status::D;
+    }
+
     void sei() {
-        m_regs.sr |= static_cast<std::uint8_t>(Status::I);
+        m_regs.sr |= Status::I;
     }
 };
 
