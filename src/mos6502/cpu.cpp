@@ -75,6 +75,69 @@ public:
         m_dispatch[0x38] = &Cpu::Impl::sec;
         m_dispatch[0xF8] = &Cpu::Impl::sed;
         m_dispatch[0x78] = &Cpu::Impl::sei;
+
+        m_dispatch[0x61] = &Cpu::Impl::adc;
+        m_dispatch[0x65] = &Cpu::Impl::adc;
+        m_dispatch[0x69] = &Cpu::Impl::adc;
+        m_dispatch[0x6D] = &Cpu::Impl::adc;
+        m_dispatch[0x71] = &Cpu::Impl::adc;
+        m_dispatch[0x75] = &Cpu::Impl::adc;
+        m_dispatch[0x79] = &Cpu::Impl::adc;
+        m_dispatch[0x7D] = &Cpu::Impl::adc;
+
+        m_dispatch[0xE1] = &Cpu::Impl::sbc;
+        m_dispatch[0xE5] = &Cpu::Impl::sbc;
+        m_dispatch[0xE9] = &Cpu::Impl::sbc;
+        m_dispatch[0xED] = &Cpu::Impl::sbc;
+        m_dispatch[0xF1] = &Cpu::Impl::sbc;
+        m_dispatch[0xF5] = &Cpu::Impl::sbc;
+        m_dispatch[0xF9] = &Cpu::Impl::sbc;
+        m_dispatch[0xFD] = &Cpu::Impl::sbc;
+
+        m_dispatch[0x21] = &Cpu::Impl::amd;
+        m_dispatch[0x25] = &Cpu::Impl::amd;
+        m_dispatch[0x29] = &Cpu::Impl::amd;
+        m_dispatch[0x2D] = &Cpu::Impl::amd;
+        m_dispatch[0x31] = &Cpu::Impl::amd;
+        m_dispatch[0x35] = &Cpu::Impl::amd;
+        m_dispatch[0x39] = &Cpu::Impl::amd;
+        m_dispatch[0x3D] = &Cpu::Impl::amd;
+
+        m_dispatch[0x01] = &Cpu::Impl::ora;
+        m_dispatch[0x05] = &Cpu::Impl::ora;
+        m_dispatch[0x09] = &Cpu::Impl::ora;
+        m_dispatch[0x0D] = &Cpu::Impl::ora;
+        m_dispatch[0x11] = &Cpu::Impl::ora;
+        m_dispatch[0x15] = &Cpu::Impl::ora;
+        m_dispatch[0x19] = &Cpu::Impl::ora;
+        m_dispatch[0x1D] = &Cpu::Impl::ora;
+
+        m_dispatch[0x41] = &Cpu::Impl::eor;
+        m_dispatch[0x45] = &Cpu::Impl::eor;
+        m_dispatch[0x49] = &Cpu::Impl::eor;
+        m_dispatch[0x4D] = &Cpu::Impl::eor;
+        m_dispatch[0x51] = &Cpu::Impl::eor;
+        m_dispatch[0x55] = &Cpu::Impl::eor;
+        m_dispatch[0x59] = &Cpu::Impl::eor;
+        m_dispatch[0x5D] = &Cpu::Impl::eor;
+
+        m_dispatch[0xC1] = &Cpu::Impl::cmp;
+        m_dispatch[0xC5] = &Cpu::Impl::cmp;
+        m_dispatch[0xC9] = &Cpu::Impl::cmp;
+        m_dispatch[0xCD] = &Cpu::Impl::cmp;
+        m_dispatch[0xD1] = &Cpu::Impl::cmp;
+        m_dispatch[0xD5] = &Cpu::Impl::cmp;
+        m_dispatch[0xD9] = &Cpu::Impl::cmp;
+        m_dispatch[0xDD] = &Cpu::Impl::cmp;
+
+        m_dispatch[0xA1] = &Cpu::Impl::lda;
+        m_dispatch[0xA5] = &Cpu::Impl::lda;
+        m_dispatch[0xA9] = &Cpu::Impl::lda;
+        m_dispatch[0xAD] = &Cpu::Impl::lda;
+        m_dispatch[0xB1] = &Cpu::Impl::lda;
+        m_dispatch[0xB5] = &Cpu::Impl::lda;
+        m_dispatch[0xB9] = &Cpu::Impl::lda;
+        m_dispatch[0xBD] = &Cpu::Impl::lda;
     }
 
     Registers& regs()
@@ -126,6 +189,34 @@ private:
 
     void sei() {
         m_regs.sr |= Status::I;
+    }
+
+    void adc() {
+
+    }
+
+    void sbc() {
+
+    }
+
+    void amd() {
+
+    }
+
+    void eor() {
+
+    }
+
+    void ora() {
+
+    }
+
+    void cmp() {
+
+    }
+
+    void lda() {
+
     }
 };
 
