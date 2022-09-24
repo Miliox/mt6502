@@ -146,6 +146,18 @@ public:
         m_dispatch[0xB5] = &Cpu::Impl::lda;
         m_dispatch[0xB9] = &Cpu::Impl::lda;
         m_dispatch[0xBD] = &Cpu::Impl::lda;
+
+        m_dispatch[0xA2] = &Cpu::Impl::ldx;
+        m_dispatch[0xA6] = &Cpu::Impl::ldx;
+        m_dispatch[0xB6] = &Cpu::Impl::ldx;
+        m_dispatch[0xAE] = &Cpu::Impl::ldx;
+        m_dispatch[0xBE] = &Cpu::Impl::ldx;
+
+        m_dispatch[0xA0] = &Cpu::Impl::ldy;
+        m_dispatch[0xA4] = &Cpu::Impl::ldy;
+        m_dispatch[0xAC] = &Cpu::Impl::ldy;
+        m_dispatch[0xB4] = &Cpu::Impl::ldy;
+        m_dispatch[0xBC] = &Cpu::Impl::ldy;
     }
 
     Registers& regs()
@@ -226,7 +238,15 @@ private:
 
         std::uint8_t res = __builtin_addcb(acc, mem, carry_in, &carry_out);
 
+        int aux{};
+        bool over_out = __builtin_sadd_overflow(
+            static_cast<int>(acc << 24),
+            static_cast<int>((mem + carry_in) << 24),
+            &aux);
+
+        m_regs.ac = res;
         set_if(static_cast<bool>(res & 0x80), Status::N);
+        set_if(over_out,   Status::V);
         set_if(res == std::uint8_t{},         Status::Z);
         set_if(static_cast<bool>(carry_out),  Status::C);
     }
@@ -262,14 +282,28 @@ private:
     }
 
     void lda() {
+        m_regs.ac = read_instruction_input();
+        set_if(m_regs.ac >= 128U, Status::N);
+        set_if(m_regs.ac == 0U,   Status::Z);
+    }
 
+    void ldx() {
+        m_regs.xi = read_instruction_input();
+        set_if(m_regs.xi >= 128U, Status::N);
+        set_if(m_regs.xi == 0U,   Status::Z);
+    }
+
+    void ldy() {
+        m_regs.yi = read_instruction_input();
+        set_if(m_regs.yi >= 128U, Status::N);
+        set_if(m_regs.yi == 0U,   Status::Z);
     }
 
     inline void set_if(bool cond, Status status) {
         if (cond) {
             m_regs.sr |= status;
         } else {
-            m_regs.sr &= status;
+            m_regs.sr &= ~status;
         }
     }
 
@@ -286,42 +320,68 @@ private:
         group_one:
         switch (m_instruction.parts.addr)
         {
-        case 0: return 0x00;
-        case 1: return 0x00;
+        case 0:
+        {
+            std::uint8_t lo = m_bus->read((m_immediate8 + m_regs.xi)      & 0xFF);
+            std::uint8_t hi = m_bus->read((m_immediate8 + m_regs.xi + 1U) & 0xFF);
+            std::uint16_t addr = ((hi << 8) | lo) & 0xFFFF;
+            return m_bus->read(addr);
+        }
+        case 1: return m_bus->read(m_immediate8);
         case 2: return m_immediate8;
         case 3: return m_bus->read(m_immediate16);
-        case 4: return 0x00;
-        case 5: return 0x00;
-        case 6: return 0x00;
-        case 7: return 0x00;
+        case 4:
+        {
+            std::uint8_t lo = m_bus->read(m_immediate8);
+            std::uint8_t hi = m_bus->read((m_immediate8 + 1U) & 0xFF);
+            std::uint16_t addr = ((hi << 8) | lo) & 0xFFFF;
+            return m_bus->read((addr + m_regs.yi) & 0xFFFF);
+        }
+        case 5: return m_bus->read((m_immediate8 + m_regs.xi) & 0xFF);
+        case 6: return m_bus->read(m_immediate16 + m_regs.yi);
+        case 7: return m_bus->read(m_immediate16 + m_regs.xi);
         default: throw std::runtime_error("illegal address mode");
         }
 
         group_two:
         switch (m_instruction.parts.addr)
         {
-        case 0: return 0x00;
-        case 1: return 0x00;
-        case 2: return 0x00;
-        case 3: return 0x00;
-        case 4: return 0x00;
-        case 5: return 0x00;
-        case 6: return 0x00;
-        case 7: return 0x00;
+        case 0: return m_immediate8;
+        case 1: return m_bus->read(m_immediate8);
+        case 2: throw std::runtime_error("not implemented yet");
+        case 3: return m_bus->read(m_immediate16);
+        case 4: throw std::runtime_error("not implemented yet");
+        case 5:
+        {
+            if (m_instruction.parts.oper == 4 || m_instruction.parts.oper == 5) {
+                return m_bus->read((m_immediate8 + m_regs.yi) & 0xFF);
+            } else {
+                return m_bus->read((m_immediate8 + m_regs.xi) & 0xFF);
+            }
+        }
+        case 6: throw std::runtime_error("not implemented yet");
+        case 7:
+        {
+            if (m_instruction.parts.oper == 5) {
+                return m_bus->read(m_immediate16 + m_regs.yi);
+            } else {
+                return m_bus->read(m_immediate16 + m_regs.xi);
+            }
+        }
         default: throw std::runtime_error("illegal address mode");
         }
 
         group_three:
         switch (m_instruction.parts.addr)
         {
-        case 0: return 0x00;
-        case 1: return 0x00;
-        case 2: return 0x00;
-        case 3: return 0x00;
-        case 4: return 0x00;
-        case 5: return 0x00;
-        case 6: return 0x00;
-        case 7: return 0x00;
+        case 0: return m_immediate8;
+        case 1: return m_bus->read(m_immediate8);
+        case 2: throw std::runtime_error("not implemented yet");
+        case 3: return m_bus->read(m_immediate16);
+        case 4: throw std::runtime_error("not implemented yet");
+        case 5: return m_bus->read((m_immediate8 + m_regs.xi) & 0xFF);
+        case 6: throw std::runtime_error("not implemented yet");
+        case 7: return m_bus->read(m_immediate16 + m_regs.xi);
         default: throw std::runtime_error("illegal address mode");
         }
     }
