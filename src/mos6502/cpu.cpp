@@ -2,18 +2,24 @@
 
 #include <array>
 #include <utility>
+#include <x86intrin.h>
 
 #include "mos6502/bus.hpp"
 #include "mos6502/regs.hpp"
 #include "mos6502/status.hpp"
 
 // @see https://llx.com/Neil/a2/opcodes.html
-struct Instruction
+union Instruction
 {
-    std::uint8_t group: 2;
-    std::uint8_t addr:  3;
-    std::uint8_t oper:  3;
+    struct {
+        std::uint8_t group: 2;
+        std::uint8_t addr:  3;
+        std::uint8_t oper:  3;
+    } parts;
+    std::uint8_t opcode;
 };
+
+static_assert(sizeof(Instruction) == 1);
 
 /// Lookup Table for Instruction Length
 static std::array<std::uint8_t, 256> InstructionLength = {
@@ -61,8 +67,10 @@ namespace mos6502
 {
 class Cpu::Impl {
 public:
-    Impl(std::shared_ptr<IBus> bus) : m_bus(std::move(bus)), m_dispatch{}, m_regs{}
+    Impl(std::shared_ptr<IBus> bus) : m_bus(std::move(bus))
     {
+        static_cast<void>(m_padding);
+
         for (std::size_t i{0U}; i < 256; ++i)
         {
             m_dispatch[i] = &Cpu::Impl::illegal;
@@ -146,18 +154,36 @@ public:
     }
 
     std::uint8_t step() {
-        std::uint8_t const opcode{m_bus->read(m_regs.pc)};
+        m_instruction.opcode = m_bus->read(m_regs.pc);
+        m_immediate8 = m_bus->read(m_regs.pc + 1U);
+        m_immediate16 = static_cast<std::uint16_t>(m_bus->read(m_regs.pc + 2U) << 8) + m_immediate8;
+        m_extra_cycles = 0U;
 
-        (*this.*m_dispatch[opcode])();
+        std::uint8_t length{InstructionLength[m_instruction.opcode]};
+        std::uint8_t cycles{InstructionCycles[m_instruction.opcode]};
 
-        m_regs.pc += InstructionLength[opcode];
-        return InstructionCycles[opcode];
+        (*this.*m_dispatch[m_instruction.opcode])();
+
+        m_regs.pc += length;
+        return cycles + m_extra_cycles;
     }
 
 private:
     std::shared_ptr<IBus> m_bus;
-    std::array<void (Cpu::Impl::*)(), 256> m_dispatch;
-    Registers m_regs;
+
+    Registers m_regs{};
+
+    Instruction m_instruction{};
+
+    std::uint8_t m_immediate8{};
+
+    std::uint16_t m_immediate16{};
+
+    std::uint8_t m_extra_cycles{};
+
+    std::array<std::uint8_t, 3> const m_padding{};
+
+    std::array<void (Cpu::Impl::*)(), 256> m_dispatch{};
 
     [[ noreturn ]] void illegal() {
         throw std::runtime_error("Illegal instruction hit!");
@@ -192,11 +218,31 @@ private:
     }
 
     void adc() {
+        std::uint8_t mem{read_instruction_input()};
 
+        std::uint8_t acc{m_regs.ac};
+        std::uint8_t carry_in{static_cast<bool>(m_regs.sr & Status::C) ? std::uint8_t{1} : std::uint8_t{}};
+        std::uint8_t carry_out{};
+
+        std::uint8_t res = __builtin_addcb(acc, mem, carry_in, &carry_out);
+
+        set_if(static_cast<bool>(res & 0x80), Status::N);
+        set_if(res == std::uint8_t{},         Status::Z);
+        set_if(static_cast<bool>(carry_out),  Status::C);
     }
 
     void sbc() {
+        std::uint8_t acc{};
+        std::uint8_t mem{};
 
+        std::uint8_t carry_in{static_cast<bool>(m_regs.sr & Status::C) ? std::uint8_t{1} : std::uint8_t{}};
+        std::uint8_t carry_out{};
+
+        std::uint8_t res = __builtin_subcb(acc, mem, carry_in, &carry_out);
+
+        set_if(static_cast<bool>(res & 0x80), Status::N);
+        set_if(res == std::uint8_t{},         Status::Z);
+        set_if(static_cast<bool>(carry_out),  Status::C);
     }
 
     void amd() {
@@ -217,6 +263,67 @@ private:
 
     void lda() {
 
+    }
+
+    inline void set_if(bool cond, Status status) {
+        if (cond) {
+            m_regs.sr |= status;
+        } else {
+            m_regs.sr &= status;
+        }
+    }
+
+    std::uint8_t read_instruction_input() {
+        // Declutter switch inside switch using goto
+        switch (m_instruction.parts.group)
+        {
+        case 1: goto group_one;
+        case 2: goto group_two;
+        case 0: goto group_three;
+        default: throw std::runtime_error("illegal instruction group");
+        }
+
+        group_one:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: return 0x00;
+        case 1: return 0x00;
+        case 2: return m_immediate8;
+        case 3: return m_bus->read(m_immediate16);
+        case 4: return 0x00;
+        case 5: return 0x00;
+        case 6: return 0x00;
+        case 7: return 0x00;
+        default: throw std::runtime_error("illegal address mode");
+        }
+
+        group_two:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: return 0x00;
+        case 1: return 0x00;
+        case 2: return 0x00;
+        case 3: return 0x00;
+        case 4: return 0x00;
+        case 5: return 0x00;
+        case 6: return 0x00;
+        case 7: return 0x00;
+        default: throw std::runtime_error("illegal address mode");
+        }
+
+        group_three:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: return 0x00;
+        case 1: return 0x00;
+        case 2: return 0x00;
+        case 3: return 0x00;
+        case 4: return 0x00;
+        case 5: return 0x00;
+        case 6: return 0x00;
+        case 7: return 0x00;
+        default: throw std::runtime_error("illegal address mode");
+        }
     }
 };
 
