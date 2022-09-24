@@ -327,6 +327,11 @@ private:
     }
 };
 
+Cpu::Cpu(std::shared_ptr<IBus> bus) : m_pimpl{std::make_unique<Cpu::Impl>(std::move(bus))} {
+
+}
+
+Cpu::~Cpu() = default;
 
 Registers& Cpu::regs()
 {

@@ -11,6 +11,8 @@ class Cpu final {
 public:
     Cpu(std::shared_ptr<IBus> bus);
 
+    ~Cpu();
+
     /// Retrieve registers
     Registers& regs();
 

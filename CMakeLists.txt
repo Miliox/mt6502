@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.20)
+cmake_minimum_required (VERSION 3.21)
 project(project)
 
 set(CMAKE_CXX_STANDARD   23)
@@ -73,4 +73,9 @@ message(DEBUG "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(DEBUG "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 
 add_library(mos6502 src/mos6502/bus.cpp src/mos6502/cpu.cpp)
-target_include_directories(mos6502 PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include)
+target_include_directories(mos6502 PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+
+find_package(Catch2 CONFIG REQUIRED)
+
+add_executable(mos6502_test test/mos6502_test.cpp)
+target_link_libraries(mos6502_test PRIVATE mos6502 Catch2::Catch2WithMain)
