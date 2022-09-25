@@ -230,25 +230,32 @@ private:
     }
 
     void adc() {
-        std::uint8_t mem{read_instruction_input()};
+        // compute with signed values to set overflow flag in native x86
+        std::int8_t acc{static_cast<std::int8_t>(m_regs.ac)};
+        std::int8_t mem{static_cast<std::int8_t>(read_instruction_input())};
+        std::int8_t res{};
 
-        std::uint8_t acc{m_regs.ac};
-        std::uint8_t carry_in{static_cast<bool>(m_regs.sr & Status::C) ? std::uint8_t{1} : std::uint8_t{}};
-        std::uint8_t carry_out{};
+        if (static_cast<bool>(m_regs.sr & Status::C)) {
+            __asm__ volatile("stc");
+        } else {
+            __asm__ volatile("clc");
+        }
+        __asm__ volatile("adcb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
 
-        std::uint8_t res = __builtin_addcb(acc, mem, carry_in, &carry_out);
+        std::uint8_t c_out{};
+        std::uint8_t n_out{};
+        std::uint8_t v_out{};
+        std::uint8_t z_out{};
+        __asm__ volatile("setc %0" : "=g" (c_out));
+        __asm__ volatile("sets %0" : "=g" (n_out));
+        __asm__ volatile("seto %0" : "=g" (v_out));
+        __asm__ volatile("setz %0" : "=g" (z_out));
 
-        int aux{};
-        bool over_out = __builtin_sadd_overflow(
-            static_cast<int>(acc << 24),
-            static_cast<int>((mem + carry_in) << 24),
-            &aux);
-
-        m_regs.ac = res;
-        set_if(static_cast<bool>(res & 0x80), Status::N);
-        set_if(over_out,   Status::V);
-        set_if(res == std::uint8_t{},         Status::Z);
-        set_if(static_cast<bool>(carry_out),  Status::C);
+        m_regs.ac = static_cast<std::uint8_t>(res);
+        set_if(c_out, Status::C);
+        set_if(n_out, Status::N);
+        set_if(v_out, Status::V);
+        set_if(z_out, Status::Z);
     }
 
     void sbc() {
