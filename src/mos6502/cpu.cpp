@@ -71,7 +71,7 @@ public:
     {
         static_cast<void>(m_padding);
 
-        for (std::size_t i{0U}; i < 256; ++i)
+        for (std::size_t i{0U}; i < m_dispatch.size(); ++i)
         {
             m_dispatch[i] = &Cpu::Impl::illegal;
         }
