@@ -138,6 +138,18 @@ public:
         m_dispatch[0xD9] = &Cpu::Impl::cmp;
         m_dispatch[0xDD] = &Cpu::Impl::cmp;
 
+        m_dispatch[0xE0] = &Cpu::Impl::cpx;
+        m_dispatch[0xE4] = &Cpu::Impl::cpx;
+        m_dispatch[0xEC] = &Cpu::Impl::cpx;
+
+        m_dispatch[0xC0] = &Cpu::Impl::cpy;
+        m_dispatch[0xC4] = &Cpu::Impl::cpy;
+        m_dispatch[0xCC] = &Cpu::Impl::cpy;
+
+        m_dispatch[0xD5] = &Cpu::Impl::cmp;
+        m_dispatch[0xD9] = &Cpu::Impl::cmp;
+        m_dispatch[0xDD] = &Cpu::Impl::cmp;
+
         m_dispatch[0xA1] = &Cpu::Impl::lda;
         m_dispatch[0xA5] = &Cpu::Impl::lda;
         m_dispatch[0xA9] = &Cpu::Impl::lda;
@@ -302,7 +314,57 @@ private:
     }
 
     void cmp() {
+        std::uint8_t acc{m_regs.ac};
+        std::uint8_t mem{read_instruction_input()};
 
+        __asm__ volatile("cmpb %%bl, %%al" : : "a" (acc), "b" (mem));
+
+        std::uint8_t c_out{};
+        std::uint8_t n_out{};
+        std::uint8_t z_out{};
+        __asm__ volatile("setnc %0" : "=g" (c_out));
+        __asm__ volatile("sets %0" : "=g" (n_out));
+        __asm__ volatile("setz %0" : "=g" (z_out));
+
+        set_if(c_out, Status::C);
+        set_if(n_out, Status::N);
+        set_if(z_out, Status::Z);
+    }
+
+    void cpx() {
+        std::uint8_t idx{m_regs.xi};
+        std::uint8_t mem{read_instruction_input()};
+
+        __asm__ volatile("cmpb %%bl, %%al" : : "a" (idx), "b" (mem));
+
+        std::uint8_t c_out{};
+        std::uint8_t n_out{};
+        std::uint8_t z_out{};
+        __asm__ volatile("setnc %0" : "=g" (c_out));
+        __asm__ volatile("sets %0" : "=g" (n_out));
+        __asm__ volatile("setz %0" : "=g" (z_out));
+
+        set_if(c_out, Status::C);
+        set_if(n_out, Status::N);
+        set_if(z_out, Status::Z);
+    }
+
+    void cpy() {
+        std::uint8_t idy{m_regs.yi};
+        std::uint8_t mem{read_instruction_input()};
+
+        __asm__ volatile("cmpb %%bl, %%al" : : "a" (idy), "b" (mem));
+
+        std::uint8_t c_out{};
+        std::uint8_t n_out{};
+        std::uint8_t z_out{};
+        __asm__ volatile("setnc %0" : "=g" (c_out));
+        __asm__ volatile("sets %0" : "=g" (n_out));
+        __asm__ volatile("setz %0" : "=g" (z_out));
+
+        set_if(c_out, Status::C);
+        set_if(n_out, Status::N);
+        set_if(z_out, Status::Z);
     }
 
     void lda() {
