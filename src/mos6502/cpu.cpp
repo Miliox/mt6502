@@ -259,17 +259,34 @@ private:
     }
 
     void sbc() {
-        std::uint8_t acc{};
-        std::uint8_t mem{};
+        // compute with signed values to set overflow flag in native x86
+        std::int8_t acc{static_cast<std::int8_t>(m_regs.ac)};
+        std::int8_t mem{static_cast<std::int8_t>(read_instruction_input())};
+        std::int8_t res{};
 
-        std::uint8_t carry_in{static_cast<bool>(m_regs.sr & Status::C) ? std::uint8_t{1} : std::uint8_t{}};
-        std::uint8_t carry_out{};
+        // Borrow when carry unset
+        if (static_cast<bool>(m_regs.sr & Status::C)) {
+            __asm__ volatile("clc");
+        } else {
+            __asm__ volatile("stc");
+        }
+        __asm__ volatile("sbbb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
 
-        std::uint8_t res = __builtin_subcb(acc, mem, carry_in, &carry_out);
+        std::uint8_t c_out{};
+        std::uint8_t n_out{};
+        std::uint8_t v_out{};
+        std::uint8_t z_out{};
 
-        set_if(static_cast<bool>(res & 0x80), Status::N);
-        set_if(res == std::uint8_t{},         Status::Z);
-        set_if(static_cast<bool>(carry_out),  Status::C);
+        __asm__ volatile("setnc %0" : "=g" (c_out)); // C = ~B
+        __asm__ volatile("sets %0" : "=g" (n_out));
+        __asm__ volatile("seto %0" : "=g" (v_out));
+        __asm__ volatile("setz %0" : "=g" (z_out));
+
+        m_regs.ac = static_cast<std::uint8_t>(res);
+        set_if(c_out, Status::C);
+        set_if(n_out, Status::N);
+        set_if(v_out, Status::V);
+        set_if(z_out, Status::Z);
     }
 
     void amd() {
