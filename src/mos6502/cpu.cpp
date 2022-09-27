@@ -250,20 +250,20 @@ private:
         std::int8_t res{};
 
         if (static_cast<bool>(m_regs.sr & C)) {
-            __asm__ volatile("stc");
+            __asm__ __volatile__("stc");
         } else {
-            __asm__ volatile("clc");
+            __asm__ __volatile__("clc");
         }
-        __asm__ volatile("adcb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
+        __asm__ __volatile__("adcb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
 
         std::uint8_t c_out{};
         std::uint8_t n_out{};
         std::uint8_t v_out{};
         std::uint8_t z_out{};
-        __asm__ volatile("setc %0" : "=g" (c_out));
-        __asm__ volatile("sets %0" : "=g" (n_out));
-        __asm__ volatile("seto %0" : "=g" (v_out));
-        __asm__ volatile("setz %0" : "=g" (z_out));
+        __asm__ __volatile__("setc %0" : "=g" (c_out));
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("seto %0" : "=g" (v_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
 
         m_regs.ac = static_cast<std::uint8_t>(res);
         set_if(c_out, C);
@@ -280,21 +280,21 @@ private:
 
         // Borrow when carry unset
         if (static_cast<bool>(m_regs.sr & C)) {
-            __asm__ volatile("clc");
+            __asm__ __volatile__("clc");
         } else {
-            __asm__ volatile("stc");
+            __asm__ __volatile__("stc");
         }
-        __asm__ volatile("sbbb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
+        __asm__ __volatile__("sbbb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
 
         std::uint8_t c_out{};
         std::uint8_t n_out{};
         std::uint8_t v_out{};
         std::uint8_t z_out{};
 
-        __asm__ volatile("setnc %0" : "=g" (c_out)); // C = ~B
-        __asm__ volatile("sets %0" : "=g" (n_out));
-        __asm__ volatile("seto %0" : "=g" (v_out));
-        __asm__ volatile("setz %0" : "=g" (z_out));
+        __asm__ __volatile__("setnc %0" : "=g" (c_out)); // C = ~B
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("seto %0" : "=g" (v_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
 
         m_regs.ac = static_cast<std::uint8_t>(res);
         set_if(c_out, C);
@@ -319,14 +319,14 @@ private:
         std::uint8_t acc{m_regs.ac};
         std::uint8_t mem{read_instruction_input()};
 
-        __asm__ volatile("cmpb %%bl, %%al" : : "a" (acc), "b" (mem));
+        __asm__ __volatile__("cmpb %%bl, %%al" : : "a" (acc), "b" (mem));
 
         std::uint8_t c_out{};
         std::uint8_t n_out{};
         std::uint8_t z_out{};
-        __asm__ volatile("setnc %0" : "=g" (c_out));
-        __asm__ volatile("sets %0" : "=g" (n_out));
-        __asm__ volatile("setz %0" : "=g" (z_out));
+        __asm__ __volatile__("setnc %0" : "=g" (c_out));
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
 
         set_if(c_out, C);
         set_if(n_out, N);
@@ -337,14 +337,14 @@ private:
         std::uint8_t idx{m_regs.xi};
         std::uint8_t mem{read_instruction_input()};
 
-        __asm__ volatile("cmpb %%bl, %%al" : : "a" (idx), "b" (mem));
+        __asm__ __volatile__("cmpb %%bl, %%al" : : "a" (idx), "b" (mem));
 
         std::uint8_t c_out{};
         std::uint8_t n_out{};
         std::uint8_t z_out{};
-        __asm__ volatile("setnc %0" : "=g" (c_out));
-        __asm__ volatile("sets %0" : "=g" (n_out));
-        __asm__ volatile("setz %0" : "=g" (z_out));
+        __asm__ __volatile__("setnc %0" : "=g" (c_out));
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
 
         set_if(c_out, C);
         set_if(n_out, N);
@@ -355,14 +355,14 @@ private:
         std::uint8_t idy{m_regs.yi};
         std::uint8_t mem{read_instruction_input()};
 
-        __asm__ volatile("cmpb %%bl, %%al" : : "a" (idy), "b" (mem));
+        __asm__ __volatile__("cmpb %%bl, %%al" : : "a" (idy), "b" (mem));
 
         std::uint8_t c_out{};
         std::uint8_t n_out{};
         std::uint8_t z_out{};
-        __asm__ volatile("setnc %0" : "=g" (c_out));
-        __asm__ volatile("sets %0" : "=g" (n_out));
-        __asm__ volatile("setz %0" : "=g" (z_out));
+        __asm__ __volatile__("setnc %0" : "=g" (c_out));
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
 
         set_if(c_out, C);
         set_if(n_out, N);
