@@ -1,6 +1,8 @@
 #include "mos6502/cpu.hpp"
 
 #include <array>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 #include <x86intrin.h>
 
@@ -400,76 +402,105 @@ private:
         case 1: goto group_one;
         case 2: goto group_two;
         case 0: goto group_three;
-        default: throw std::runtime_error("illegal instruction group");
+        default: goto unsupported;
         }
 
         group_one:
         switch (m_instruction.parts.addr)
         {
-        case 0:
+        case 0: goto indirect_x;
+        case 1: goto zero_page;
+        case 2: goto immediate;
+        case 3: goto absolute;
+        case 4: goto indirect_y;
+        case 5: goto zero_page_x;
+        case 6: goto absolute_y;
+        case 7: goto absolute_x;
+        default: goto unsupported;
+        }
+
+        group_two:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: goto immediate;
+        case 1: goto zero_page;
+        case 2: goto unsupported;;
+        case 3: goto absolute;
+        case 4: goto unsupported;
+        case 5:
+            if (m_instruction.parts.oper == 4 ||
+                m_instruction.parts.oper == 5) {
+                goto zero_page_y;
+            } else {
+                goto zero_page_x;
+            }
+        case 6: goto unsupported;
+        case 7:
+            if (m_instruction.parts.oper == 5) {
+                goto absolute_y;
+            } else {
+                goto absolute_x;
+            }
+        default: goto unsupported;
+        }
+
+        group_three:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: goto immediate;
+        case 1: goto zero_page;
+        case 2: goto unsupported;
+        case 3: goto absolute;
+        case 4: goto unsupported;
+        case 5: goto zero_page_x;
+        case 6: goto unsupported;
+        case 7: goto absolute_x;
+        default: goto unsupported;
+        }
+
+        immediate:
+        return m_immediate8;
+
+        absolute:
+        return m_bus->read(m_immediate16);
+
+        absolute_x:
+        return m_bus->read(m_immediate16 + m_regs.xi);
+
+        absolute_y:
+        return m_bus->read(m_immediate16 + m_regs.yi);
+
+        zero_page:
+        return m_bus->read(m_immediate8);
+
+        zero_page_x:
+        return m_bus->read((m_immediate8 + m_regs.xi) & 0xFF);
+
+        zero_page_y:
+        return m_bus->read((m_immediate8 + m_regs.yi) & 0xFF);
+
+        indirect_x:
         {
             std::uint8_t lo = m_bus->read((m_immediate8 + m_regs.xi)      & 0xFF);
             std::uint8_t hi = m_bus->read((m_immediate8 + m_regs.xi + 1U) & 0xFF);
             std::uint16_t addr = ((hi << 8) | lo) & 0xFFFF;
             return m_bus->read(addr);
         }
-        case 1: return m_bus->read(m_immediate8);
-        case 2: return m_immediate8;
-        case 3: return m_bus->read(m_immediate16);
-        case 4:
+
+        indirect_y:
         {
             std::uint8_t lo = m_bus->read(m_immediate8);
             std::uint8_t hi = m_bus->read((m_immediate8 + 1U) & 0xFF);
             std::uint16_t addr = ((hi << 8) | lo) & 0xFFFF;
             return m_bus->read((addr + m_regs.yi) & 0xFFFF);
         }
-        case 5: return m_bus->read((m_immediate8 + m_regs.xi) & 0xFF);
-        case 6: return m_bus->read(m_immediate16 + m_regs.yi);
-        case 7: return m_bus->read(m_immediate16 + m_regs.xi);
-        default: throw std::runtime_error("illegal address mode");
-        }
 
-        group_two:
-        switch (m_instruction.parts.addr)
-        {
-        case 0: return m_immediate8;
-        case 1: return m_bus->read(m_immediate8);
-        case 2: throw std::runtime_error("not implemented yet");
-        case 3: return m_bus->read(m_immediate16);
-        case 4: throw std::runtime_error("not implemented yet");
-        case 5:
-        {
-            if (m_instruction.parts.oper == 4 || m_instruction.parts.oper == 5) {
-                return m_bus->read((m_immediate8 + m_regs.yi) & 0xFF);
-            } else {
-                return m_bus->read((m_immediate8 + m_regs.xi) & 0xFF);
-            }
-        }
-        case 6: throw std::runtime_error("not implemented yet");
-        case 7:
-        {
-            if (m_instruction.parts.oper == 5) {
-                return m_bus->read(m_immediate16 + m_regs.yi);
-            } else {
-                return m_bus->read(m_immediate16 + m_regs.xi);
-            }
-        }
-        default: throw std::runtime_error("illegal address mode");
-        }
-
-        group_three:
-        switch (m_instruction.parts.addr)
-        {
-        case 0: return m_immediate8;
-        case 1: return m_bus->read(m_immediate8);
-        case 2: throw std::runtime_error("not implemented yet");
-        case 3: return m_bus->read(m_immediate16);
-        case 4: throw std::runtime_error("not implemented yet");
-        case 5: return m_bus->read((m_immediate8 + m_regs.xi) & 0xFF);
-        case 6: throw std::runtime_error("not implemented yet");
-        case 7: return m_bus->read(m_immediate16 + m_regs.xi);
-        default: throw std::runtime_error("illegal address mode");
-        }
+        unsupported:
+        std::stringstream ss{};
+        ss << "illegal address mode: opcode="
+           << std::hex << m_instruction.opcode
+           << " (" << m_instruction.parts.group << ":" << m_instruction.parts.addr << ":" << m_instruction.parts.oper << ")";
+        throw std::runtime_error(ss.str());
     }
 };
 
