@@ -304,15 +304,54 @@ private:
     }
 
     void amd() {
+        std::uint8_t acc{m_regs.ac};
+        std::uint8_t mem{read_instruction_input()};
+        std::uint8_t res{};
 
+        __asm__ __volatile__("andb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
+
+        std::uint8_t n_out{};
+        std::uint8_t z_out{};
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
+
+        m_regs.ac = res;
+        set_if(n_out, N);
+        set_if(z_out, Z);
     }
 
     void eor() {
+        std::uint8_t acc{m_regs.ac};
+        std::uint8_t mem{read_instruction_input()};
+        std::uint8_t res{};
 
+        __asm__ __volatile__("xorb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
+
+        std::uint8_t n_out{};
+        std::uint8_t z_out{};
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
+
+        m_regs.ac = res;
+        set_if(n_out, N);
+        set_if(z_out, Z);
     }
 
     void ora() {
+        std::uint8_t acc{m_regs.ac};
+        std::uint8_t mem{read_instruction_input()};
+        std::uint8_t res{};
 
+        __asm__ __volatile__("orb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
+
+        std::uint8_t n_out{};
+        std::uint8_t z_out{};
+        __asm__ __volatile__("sets %0" : "=g" (n_out));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
+
+        m_regs.ac = res;
+        set_if(n_out, N);
+        set_if(z_out, Z);
     }
 
     void cmp() {

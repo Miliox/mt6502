@@ -478,3 +478,95 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[CPY]" ) {
     REQUIRE(cpu.regs().yi == 0x80U);
     REQUIRE(cpu.regs().sr == mos6502::C);
 }
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[AND]" ) {
+    mock_bus->mockAddressValue(0x00, 0xA9); // LDA
+    mock_bus->mockAddressValue(0x01, 0xFF); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x29); // AND
+    mock_bus->mockAddressValue(0x03, 0xA5); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x29); // AND
+    mock_bus->mockAddressValue(0x05, 0x7F); // IMM
+
+    mock_bus->mockAddressValue(0x06, 0x29); // AND
+    mock_bus->mockAddressValue(0x07, 0x5A); // IMM
+
+    mock_bus->mockAddressValue(0x08, 0x00); // PAD
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(cpu.regs().ac == 0xFF);
+    REQUIRE(cpu.regs().sr == mos6502::N);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 4U);
+    REQUIRE(cpu.regs().ac == 0xA5);
+    REQUIRE(cpu.regs().sr == mos6502::N);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 6U);
+    REQUIRE(cpu.regs().ac == 0x25);
+    REQUIRE(cpu.regs().sr == 0U);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 8U);
+    REQUIRE(cpu.regs().ac == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ORA]" ) {
+    mock_bus->mockAddressValue(0x00, 0x09); // ORA
+    mock_bus->mockAddressValue(0x01, 0x00); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x09); // ORA
+    mock_bus->mockAddressValue(0x03, 0x0F); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x09); // ORA
+    mock_bus->mockAddressValue(0x05, 0xF0); // IMM
+
+    mock_bus->mockAddressValue(0x06, 0x00); // PAD
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(cpu.regs().ac == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 4U);
+    REQUIRE(cpu.regs().ac == 0x0F);
+    REQUIRE(cpu.regs().sr == 0U);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 6U);
+    REQUIRE(cpu.regs().ac == 0xFF);
+    REQUIRE(cpu.regs().sr == mos6502::N);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[EOR]" ) {
+    mock_bus->mockAddressValue(0x00, 0x49); // EOR
+    mock_bus->mockAddressValue(0x01, 0x0F); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x49); // EOR
+    mock_bus->mockAddressValue(0x03, 0xF0); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x49); // EOR
+    mock_bus->mockAddressValue(0x05, 0xFF); // IMM
+
+    mock_bus->mockAddressValue(0x06, 0x00); // PAD
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(cpu.regs().ac == 0x0F);
+    REQUIRE(cpu.regs().sr == 0U);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 4U);
+    REQUIRE(cpu.regs().ac == 0xFF);
+    REQUIRE(cpu.regs().sr == mos6502::N);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 6U);
+    REQUIRE(cpu.regs().ac == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+}
