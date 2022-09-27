@@ -152,6 +152,9 @@ public:
         m_dispatch[0xD9] = &Cpu::Impl::cmp;
         m_dispatch[0xDD] = &Cpu::Impl::cmp;
 
+        m_dispatch[0xE8] = &Cpu::Impl::inx;
+        m_dispatch[0xC8] = &Cpu::Impl::iny;
+
         m_dispatch[0xA1] = &Cpu::Impl::lda;
         m_dispatch[0xA5] = &Cpu::Impl::lda;
         m_dispatch[0xA9] = &Cpu::Impl::lda;
@@ -406,6 +409,18 @@ private:
         set_if(c_out, C);
         set_if(n_out, N);
         set_if(z_out, Z);
+    }
+
+    void inx() {
+        m_regs.xi += 1U;
+        set_if(m_regs.xi >= 0x80, N);
+        set_if(m_regs.xi == 0x00, Z);
+    }
+
+    void iny() {
+        m_regs.yi += 1U;
+        set_if(m_regs.yi >= 0x80, N);
+        set_if(m_regs.yi == 0x00, Z);
     }
 
     void lda() {
