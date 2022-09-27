@@ -214,31 +214,31 @@ private:
     }
 
     void clc() {
-        m_regs.sr &= ~Status::C;
+        m_regs.sr &= ~C;
     }
 
     void cld() {
-        m_regs.sr &= ~Status::D;
+        m_regs.sr &= ~D;
     }
 
     void cli() {
-        m_regs.sr &= ~Status::I;
+        m_regs.sr &= ~I;
     }
 
     void clv() {
-        m_regs.sr &= ~Status::V;
+        m_regs.sr &= ~V;
     }
 
     void sec() {
-        m_regs.sr |= Status::C;
+        m_regs.sr |= C;
     }
 
     void sed() {
-        m_regs.sr |= Status::D;
+        m_regs.sr |= D;
     }
 
     void sei() {
-        m_regs.sr |= Status::I;
+        m_regs.sr |= I;
     }
 
     void adc() {
@@ -247,7 +247,7 @@ private:
         std::int8_t mem{static_cast<std::int8_t>(read_instruction_input())};
         std::int8_t res{};
 
-        if (static_cast<bool>(m_regs.sr & Status::C)) {
+        if (static_cast<bool>(m_regs.sr & C)) {
             __asm__ volatile("stc");
         } else {
             __asm__ volatile("clc");
@@ -264,10 +264,10 @@ private:
         __asm__ volatile("setz %0" : "=g" (z_out));
 
         m_regs.ac = static_cast<std::uint8_t>(res);
-        set_if(c_out, Status::C);
-        set_if(n_out, Status::N);
-        set_if(v_out, Status::V);
-        set_if(z_out, Status::Z);
+        set_if(c_out, C);
+        set_if(n_out, N);
+        set_if(v_out, V);
+        set_if(z_out, Z);
     }
 
     void sbc() {
@@ -277,7 +277,7 @@ private:
         std::int8_t res{};
 
         // Borrow when carry unset
-        if (static_cast<bool>(m_regs.sr & Status::C)) {
+        if (static_cast<bool>(m_regs.sr & C)) {
             __asm__ volatile("clc");
         } else {
             __asm__ volatile("stc");
@@ -295,10 +295,10 @@ private:
         __asm__ volatile("setz %0" : "=g" (z_out));
 
         m_regs.ac = static_cast<std::uint8_t>(res);
-        set_if(c_out, Status::C);
-        set_if(n_out, Status::N);
-        set_if(v_out, Status::V);
-        set_if(z_out, Status::Z);
+        set_if(c_out, C);
+        set_if(n_out, N);
+        set_if(v_out, V);
+        set_if(z_out, Z);
     }
 
     void amd() {
@@ -326,9 +326,9 @@ private:
         __asm__ volatile("sets %0" : "=g" (n_out));
         __asm__ volatile("setz %0" : "=g" (z_out));
 
-        set_if(c_out, Status::C);
-        set_if(n_out, Status::N);
-        set_if(z_out, Status::Z);
+        set_if(c_out, C);
+        set_if(n_out, N);
+        set_if(z_out, Z);
     }
 
     void cpx() {
@@ -344,9 +344,9 @@ private:
         __asm__ volatile("sets %0" : "=g" (n_out));
         __asm__ volatile("setz %0" : "=g" (z_out));
 
-        set_if(c_out, Status::C);
-        set_if(n_out, Status::N);
-        set_if(z_out, Status::Z);
+        set_if(c_out, C);
+        set_if(n_out, N);
+        set_if(z_out, Z);
     }
 
     void cpy() {
@@ -362,30 +362,30 @@ private:
         __asm__ volatile("sets %0" : "=g" (n_out));
         __asm__ volatile("setz %0" : "=g" (z_out));
 
-        set_if(c_out, Status::C);
-        set_if(n_out, Status::N);
-        set_if(z_out, Status::Z);
+        set_if(c_out, C);
+        set_if(n_out, N);
+        set_if(z_out, Z);
     }
 
     void lda() {
         m_regs.ac = read_instruction_input();
-        set_if(m_regs.ac >= 128U, Status::N);
-        set_if(m_regs.ac == 0U,   Status::Z);
+        set_if(m_regs.ac >= 128U, N);
+        set_if(m_regs.ac == 0U,   Z);
     }
 
     void ldx() {
         m_regs.xi = read_instruction_input();
-        set_if(m_regs.xi >= 128U, Status::N);
-        set_if(m_regs.xi == 0U,   Status::Z);
+        set_if(m_regs.xi >= 128U, N);
+        set_if(m_regs.xi == 0U,   Z);
     }
 
     void ldy() {
         m_regs.yi = read_instruction_input();
-        set_if(m_regs.yi >= 128U, Status::N);
-        set_if(m_regs.yi == 0U,   Status::Z);
+        set_if(m_regs.yi >= 128U, N);
+        set_if(m_regs.yi == 0U,   Z);
     }
 
-    inline void set_if(bool cond, Status status) {
+    inline void set_if(bool cond, std::uint8_t status) {
         if (cond) {
             m_regs.sr |= status;
         } else {
