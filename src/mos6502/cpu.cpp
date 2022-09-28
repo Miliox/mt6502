@@ -188,6 +188,29 @@ public:
         m_dispatch[0xAC] = &Cpu::Impl::ldy;
         m_dispatch[0xB4] = &Cpu::Impl::ldy;
         m_dispatch[0xBC] = &Cpu::Impl::ldy;
+
+        m_dispatch[0x81] = &Cpu::Impl::sta;
+        m_dispatch[0x85] = &Cpu::Impl::sta;
+        m_dispatch[0x8D] = &Cpu::Impl::sta;
+        m_dispatch[0x91] = &Cpu::Impl::sta;
+        m_dispatch[0x95] = &Cpu::Impl::sta;
+        m_dispatch[0x99] = &Cpu::Impl::sta;
+        m_dispatch[0x9D] = &Cpu::Impl::sta;
+
+        m_dispatch[0x86] = &Cpu::Impl::stx;
+        m_dispatch[0x8E] = &Cpu::Impl::stx;
+        m_dispatch[0x96] = &Cpu::Impl::stx;
+
+        m_dispatch[0x84] = &Cpu::Impl::sty;
+        m_dispatch[0x8C] = &Cpu::Impl::sty;
+        m_dispatch[0x94] = &Cpu::Impl::sty;
+
+        m_dispatch[0xAA] = &Cpu::Impl::tax;
+        m_dispatch[0xA8] = &Cpu::Impl::tay;
+        m_dispatch[0xBA] = &Cpu::Impl::tsx;
+        m_dispatch[0x8A] = &Cpu::Impl::txa;
+        m_dispatch[0x9A] = &Cpu::Impl::txs;
+        m_dispatch[0x98] = &Cpu::Impl::tya;
     }
 
     Registers& regs()
@@ -484,6 +507,54 @@ private:
         m_regs.yi = read_instruction_input();
         set_if(m_regs.yi >= 128U, N);
         set_if(m_regs.yi == 0U,   Z);
+    }
+
+    void sta() {
+        write_instruction_output(m_regs.ac);
+    }
+
+    void stx() {
+        write_instruction_output(m_regs.xi);
+    }
+
+    void sty() {
+        write_instruction_output(m_regs.yi);
+    }
+
+    void tax() {
+        m_regs.xi = m_regs.ac;
+        set_if(m_regs.xi >= 0x80, N);
+        set_if(m_regs.xi == 0x00, Z);
+    }
+
+    void tay() {
+        m_regs.yi = m_regs.ac;
+        set_if(m_regs.yi >= 0x80, N);
+        set_if(m_regs.yi == 0x00, Z);
+    }
+
+    void tsx() {
+        m_regs.xi = (m_regs.sp & 0x00FF);
+        set_if(m_regs.xi >= 0x80, N);
+        set_if(m_regs.xi == 0x00, Z);
+    }
+
+    void txa() {
+        m_regs.ac = m_regs.xi;
+        set_if(m_regs.ac >= 0x80, N);
+        set_if(m_regs.ac == 0x00, Z);
+    }
+
+    void txs() {
+        m_regs.sp = (m_regs.sp & 0xFF00) | m_regs.xi;
+        set_if(m_regs.xi >= 0x80, N);
+        set_if(m_regs.xi == 0x00, Z);
+    }
+
+    void tya() {
+        m_regs.ac = m_regs.yi;
+        set_if(m_regs.ac >= 0x80, N);
+        set_if(m_regs.ac == 0x00, Z);
     }
 
     inline void set_if(bool cond, std::uint8_t status) {
