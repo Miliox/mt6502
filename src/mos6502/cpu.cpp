@@ -60,7 +60,7 @@ static std::array<std::uint8_t, 256> InstructionCycles = {
     2, 6, 2, 0, 3, 3, 3, 0, 2, 2, 2, 0, 4, 4, 4, 0, // A
     2, 5, 0, 0, 4, 4, 4, 0, 2, 4, 2, 0, 4, 4, 4, 0, // B
     2, 6, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, // C
-    2, 5, 0, 0, 4, 6, 0, 0, 2, 4, 0, 0, 0, 4, 7, 0, // D
+    2, 5, 0, 0, 4, 6, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, // D
     2, 2, 0, 0, 3, 3, 5, 0, 2, 2, 2, 0, 4, 4, 6, 0, // E
     2, 5, 0, 0, 0, 4, 6, 0, 2, 4, 0, 0, 0, 4, 7, 0, // F
 };
@@ -151,6 +151,14 @@ public:
         m_dispatch[0xD5] = &Cpu::Impl::cmp;
         m_dispatch[0xD9] = &Cpu::Impl::cmp;
         m_dispatch[0xDD] = &Cpu::Impl::cmp;
+
+        m_dispatch[0xC6] = &Cpu::Impl::dec;
+        m_dispatch[0xCE] = &Cpu::Impl::dec;
+        m_dispatch[0xD6] = &Cpu::Impl::dec;
+        m_dispatch[0xDE] = &Cpu::Impl::dec;
+
+        m_dispatch[0xCA] = &Cpu::Impl::dex;
+        m_dispatch[0x88] = &Cpu::Impl::dey;
 
         m_dispatch[0xE6] = &Cpu::Impl::inc;
         m_dispatch[0xEE] = &Cpu::Impl::inc;
@@ -414,6 +422,28 @@ private:
         set_if(c_out, C);
         set_if(n_out, N);
         set_if(z_out, Z);
+    }
+
+    void dec() {
+        std::uint8_t mem{read_instruction_input()};
+
+        mem -= 1U;
+        set_if(mem >= 0x80, N);
+        set_if(mem == 0x00, Z);
+
+        write_instruction_output(mem);
+    }
+
+    void dex() {
+        m_regs.xi -= 1U;
+        set_if(m_regs.xi >= 0x80, N);
+        set_if(m_regs.xi == 0x00, Z);
+    }
+
+    void dey() {
+        m_regs.yi -= 1U;
+        set_if(m_regs.yi >= 0x80, N);
+        set_if(m_regs.yi == 0x00, Z);
     }
 
     void inc() {

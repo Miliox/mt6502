@@ -629,7 +629,6 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INY]" ) {
     REQUIRE(cpu.regs().sr == mos6502::Z);
 }
 
-
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INC]" ) {
     mock_bus->mockAddressValue(0x00, 0xE6); // INC
     mock_bus->mockAddressValue(0x01, 0x80); // ZPG
@@ -678,4 +677,108 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INC]" ) {
     REQUIRE(cpu.regs().pc == 0x0C);
     REQUIRE(mock_bus->readWrittenValue(0x00A0) == 0x02);
     REQUIRE(cpu.regs().sr == 0U);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEC]" ) {
+    mock_bus->mockAddressValue(0x00, 0xC6); // DEC
+    mock_bus->mockAddressValue(0x01, 0x80); // ZPG
+
+    mock_bus->mockAddressValue(0x02, 0xCE); // DEC
+    mock_bus->mockAddressValue(0x03, 0x80); // ABS LO
+    mock_bus->mockAddressValue(0x04, 0x80); // ABS HI
+
+    mock_bus->mockAddressValue(0x05, 0xA2); // LDX
+    mock_bus->mockAddressValue(0x06, 0x20); // IMM
+
+    mock_bus->mockAddressValue(0x07, 0xDE); // DEC
+    mock_bus->mockAddressValue(0x08, 0x80); // ABS LO,X
+    mock_bus->mockAddressValue(0x09, 0x80); // ABS HI,X
+
+    mock_bus->mockAddressValue(0x0A, 0xD6); // DEC
+    mock_bus->mockAddressValue(0x0B, 0x80); // ZPG,X
+
+    mock_bus->mockAddressValue(0x0C, 0x00); // PAD
+
+    mock_bus->mockAddressValue(0x0080, 0xFF);
+    mock_bus->mockAddressValue(0x00A0, 0x01);
+    mock_bus->mockAddressValue(0x8080, 0x7F);
+    mock_bus->mockAddressValue(0x80A0, 0x40);
+
+    REQUIRE(cpu.step() == 5U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(mock_bus->readWrittenValue(0x80) == 0xFE);
+    REQUIRE(cpu.regs().sr == mos6502::N);
+
+    REQUIRE(cpu.step() == 6U);
+    REQUIRE(cpu.regs().pc == 5U);
+    REQUIRE(mock_bus->readWrittenValue(0x8080) == 0x7E);
+    REQUIRE(cpu.regs().sr == 0);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 7U);
+    REQUIRE(cpu.regs().xi == 0x20);
+
+    REQUIRE(cpu.step() == 7U);
+    REQUIRE(cpu.regs().pc == 0x0A);
+    REQUIRE(mock_bus->readWrittenValue(0x80A0) == 0x3F);
+    REQUIRE(cpu.regs().sr == 0);
+
+    REQUIRE(cpu.step() == 6U);
+    REQUIRE(cpu.regs().pc == 0x0C);
+    REQUIRE(mock_bus->readWrittenValue(0x00A0) == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEX]" ) {
+    mock_bus->mockAddressValue(0x00, 0xA2); // LDX
+    mock_bus->mockAddressValue(0x01, 0x01); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0xCA); // DEX
+    mock_bus->mockAddressValue(0x03, 0xCA); // DEX
+    mock_bus->mockAddressValue(0x04, 0xCA); // DEX
+
+    mock_bus->mockAddressValue(0x05, 0x00); // PAD
+    mock_bus->mockAddressValue(0x06, 0x00); // PAD
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(cpu.regs().xi == 0x01);
+    REQUIRE(cpu.regs().sr == 0x00);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 3U);
+    REQUIRE(cpu.regs().xi == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 4U);
+    REQUIRE(cpu.regs().xi == 0xFF);
+    REQUIRE(cpu.regs().sr == mos6502::N);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEY]" ) {
+    mock_bus->mockAddressValue(0x00, 0xA0); // LDY
+    mock_bus->mockAddressValue(0x01, 0x01); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x88); // DEY
+    mock_bus->mockAddressValue(0x03, 0x88); // DEY
+    mock_bus->mockAddressValue(0x04, 0x88); // DEY
+
+    mock_bus->mockAddressValue(0x05, 0x00); // PAD
+    mock_bus->mockAddressValue(0x06, 0x00); // PAD
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(cpu.regs().yi == 0x01);
+    REQUIRE(cpu.regs().sr == 0x00);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 3U);
+    REQUIRE(cpu.regs().yi == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 4U);
+    REQUIRE(cpu.regs().yi == 0xFF);
+    REQUIRE(cpu.regs().sr == mos6502::N);
 }
