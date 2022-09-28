@@ -152,6 +152,11 @@ public:
         m_dispatch[0xD9] = &Cpu::Impl::cmp;
         m_dispatch[0xDD] = &Cpu::Impl::cmp;
 
+        m_dispatch[0xE6] = &Cpu::Impl::inc;
+        m_dispatch[0xEE] = &Cpu::Impl::inc;
+        m_dispatch[0xF6] = &Cpu::Impl::inc;
+        m_dispatch[0xFE] = &Cpu::Impl::inc;
+
         m_dispatch[0xE8] = &Cpu::Impl::inx;
         m_dispatch[0xC8] = &Cpu::Impl::iny;
 
@@ -411,6 +416,16 @@ private:
         set_if(z_out, Z);
     }
 
+    void inc() {
+        std::uint8_t mem{read_instruction_input()};
+
+        mem += 1U;
+        set_if(mem >= 0x80, N);
+        set_if(mem == 0x00, Z);
+
+        write_instruction_output(mem);
+    }
+
     void inx() {
         m_regs.xi += 1U;
         set_if(m_regs.xi >= 0x80, N);
@@ -547,6 +562,111 @@ private:
             std::uint8_t hi = m_bus->read((m_immediate8 + 1U) & 0xFF);
             std::uint16_t addr = ((hi << 8) | lo) & 0xFFFF;
             return m_bus->read((addr + m_regs.yi) & 0xFFFF);
+        }
+
+        unsupported:
+        std::stringstream ss{};
+        ss << "illegal address mode: opcode="
+           << std::hex << m_instruction.opcode
+           << " (" << m_instruction.parts.group << ":" << m_instruction.parts.addr << ":" << m_instruction.parts.oper << ")";
+        throw std::runtime_error(ss.str());
+    }
+
+    void write_instruction_output(std::uint8_t data) {
+        // Declutter switch inside switch using goto
+        switch (m_instruction.parts.group)
+        {
+        case 1: goto group_one;
+        case 2: goto group_two;
+        case 0: goto group_three;
+        default: goto unsupported;
+        }
+
+        group_one:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: goto indirect_x;
+        case 1: goto zero_page;
+        case 2: goto unsupported;
+        case 3: goto absolute;
+        case 4: goto indirect_y;
+        case 5: goto zero_page_x;
+        case 6: goto absolute_y;
+        case 7: goto absolute_x;
+        default: goto unsupported;
+        }
+
+        group_two:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: goto unsupported;
+        case 1: goto zero_page;
+        case 2: goto unsupported;;
+        case 3: goto absolute;
+        case 4: goto unsupported;
+        case 5:
+            if (m_instruction.parts.oper == 4 ||
+                m_instruction.parts.oper == 5) {
+                goto zero_page_y;
+            } else {
+                goto zero_page_x;
+            }
+        case 6: goto unsupported;
+        case 7:
+            if (m_instruction.parts.oper == 5) {
+                goto absolute_y;
+            } else {
+                goto absolute_x;
+            }
+        default: goto unsupported;
+        }
+
+        group_three:
+        switch (m_instruction.parts.addr)
+        {
+        case 0: goto unsupported;
+        case 1: goto zero_page;
+        case 2: goto unsupported;
+        case 3: goto absolute;
+        case 4: goto unsupported;
+        case 5: goto zero_page_x;
+        case 6: goto unsupported;
+        case 7: goto absolute_x;
+        default: goto unsupported;
+        }
+
+        absolute:
+        return m_bus->write(m_immediate16, data);
+
+        absolute_x:
+        return m_bus->write(m_immediate16 + m_regs.xi, data);
+
+        absolute_y:
+        return m_bus->write(m_immediate16 + m_regs.yi, data);
+
+        zero_page:
+        return m_bus->write(m_immediate8, data);
+
+        zero_page_x:
+        return m_bus->write((m_immediate8 + m_regs.xi) & 0xFF, data);
+
+        zero_page_y:
+        return m_bus->write((m_immediate8 + m_regs.yi) & 0xFF, data);
+
+        indirect_x:
+        {
+            std::uint8_t lo = m_bus->read((m_immediate8 + m_regs.xi)      & 0xFF);
+            std::uint8_t hi = m_bus->read((m_immediate8 + m_regs.xi + 1U) & 0xFF);
+            std::uint16_t addr = ((hi << 8) | lo) & 0xFFFF;
+            return m_bus->write(addr, data);
+        }
+
+        indirect_y:
+        {
+            std::uint8_t lo = m_bus->read(m_immediate8);
+            std::uint8_t hi = m_bus->read((m_immediate8 + 1U) & 0xFF);
+            std::uint16_t addr = ((hi << 8) | lo) & 0xFFFF;
+            return m_bus->write((addr + m_regs.yi) & 0xFFFF, data);
         }
 
         unsupported:

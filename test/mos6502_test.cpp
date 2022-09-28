@@ -16,20 +16,24 @@ public:
     ~MockBus() override;
 
     std::uint8_t read(std::uint16_t addr) override {
-        return mem_map.at(addr);
+        return read_map.at(addr);
     }
 
     void write(std::uint16_t addr, std::uint8_t data) override {
-        static_cast<void>(addr);
-        static_cast<void>(data);
+        write_map.insert_or_assign(addr, data);
     }
 
     void mockAddressValue(std::uint16_t addr, std::uint8_t data) {
-        mem_map.insert_or_assign(addr, data);
+        read_map.insert_or_assign(addr, data);
+    }
+
+    std::uint8_t readWrittenValue(std::uint16_t addr) {
+        return write_map.at(addr);
     }
 
 private:
-    std::unordered_map<std::uint16_t, std::uint8_t> mem_map{};
+    std::unordered_map<std::uint16_t, std::uint8_t> read_map{};
+    std::unordered_map<std::uint16_t, std::uint8_t> write_map{};
 };
 
 MockBus::MockBus() = default;
@@ -623,4 +627,55 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INY]" ) {
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().yi == 0x00);
     REQUIRE(cpu.regs().sr == mos6502::Z);
+}
+
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INC]" ) {
+    mock_bus->mockAddressValue(0x00, 0xE6); // INC
+    mock_bus->mockAddressValue(0x01, 0x80); // ZPG
+
+    mock_bus->mockAddressValue(0x02, 0xEE); // INC
+    mock_bus->mockAddressValue(0x03, 0x80); // ABS LO
+    mock_bus->mockAddressValue(0x04, 0x80); // ABS HI
+
+    mock_bus->mockAddressValue(0x05, 0xA2); // LDX
+    mock_bus->mockAddressValue(0x06, 0x20); // IMM
+
+    mock_bus->mockAddressValue(0x07, 0xFE); // INC
+    mock_bus->mockAddressValue(0x08, 0x80); // ABS LO,X
+    mock_bus->mockAddressValue(0x09, 0x80); // ABS HI,X
+
+    mock_bus->mockAddressValue(0x0A, 0xF6); // INC
+    mock_bus->mockAddressValue(0x0B, 0x80); // ZPG,X
+
+    mock_bus->mockAddressValue(0x0C, 0x00); // PAD
+
+    mock_bus->mockAddressValue(0x0080, 0xFF);
+    mock_bus->mockAddressValue(0x00A0, 0x01);
+    mock_bus->mockAddressValue(0x8080, 0x7F);
+    mock_bus->mockAddressValue(0x80A0, 0x40);
+
+    REQUIRE(cpu.step() == 5U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(mock_bus->readWrittenValue(0x80) == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+
+    REQUIRE(cpu.step() == 6U);
+    REQUIRE(cpu.regs().pc == 5U);
+    REQUIRE(mock_bus->readWrittenValue(0x8080) == 0x80);
+    REQUIRE(cpu.regs().sr == mos6502::N);
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 7U);
+    REQUIRE(cpu.regs().xi == 0x20);
+
+    REQUIRE(cpu.step() == 7U);
+    REQUIRE(cpu.regs().pc == 0x0A);
+    REQUIRE(mock_bus->readWrittenValue(0x80A0) == 0x41);
+    REQUIRE(cpu.regs().sr == 0U);
+
+    REQUIRE(cpu.step() == 6U);
+    REQUIRE(cpu.regs().pc == 0x0C);
+    REQUIRE(mock_bus->readWrittenValue(0x00A0) == 0x02);
+    REQUIRE(cpu.regs().sr == 0U);
 }
