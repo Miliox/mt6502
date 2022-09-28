@@ -32,7 +32,7 @@ static std::array<std::uint8_t, 256> InstructionLength = {
     2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, // 3
     1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, // 4
     2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, // 5
-    1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 0, 0, 3, 3, 3, 0, // 6
+    1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, // 6
     2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, // 7
     0, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0, // 8
     2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0, // 9
@@ -211,6 +211,30 @@ public:
         m_dispatch[0x8A] = &Cpu::Impl::txa;
         m_dispatch[0x9A] = &Cpu::Impl::txs;
         m_dispatch[0x98] = &Cpu::Impl::tya;
+
+        m_dispatch[0x06] = &Cpu::Impl::asl;
+        m_dispatch[0x0A] = &Cpu::Impl::asl;
+        m_dispatch[0x0E] = &Cpu::Impl::asl;
+        m_dispatch[0x16] = &Cpu::Impl::asl;
+        m_dispatch[0x1E] = &Cpu::Impl::asl;
+
+        m_dispatch[0x46] = &Cpu::Impl::lsr;
+        m_dispatch[0x4A] = &Cpu::Impl::lsr;
+        m_dispatch[0x4E] = &Cpu::Impl::lsr;
+        m_dispatch[0x56] = &Cpu::Impl::lsr;
+        m_dispatch[0x5E] = &Cpu::Impl::lsr;
+
+        m_dispatch[0x26] = &Cpu::Impl::rol;
+        m_dispatch[0x2A] = &Cpu::Impl::rol;
+        m_dispatch[0x2E] = &Cpu::Impl::rol;
+        m_dispatch[0x36] = &Cpu::Impl::rol;
+        m_dispatch[0x3E] = &Cpu::Impl::rol;
+
+        m_dispatch[0x66] = &Cpu::Impl::ror;
+        m_dispatch[0x6A] = &Cpu::Impl::ror;
+        m_dispatch[0x6E] = &Cpu::Impl::ror;
+        m_dispatch[0x76] = &Cpu::Impl::ror;
+        m_dispatch[0x7E] = &Cpu::Impl::ror;
     }
 
     Registers& regs()
@@ -557,6 +581,60 @@ private:
         set_if(m_regs.ac == 0x00, Z);
     }
 
+    void asl() {
+        std::uint8_t mem{read_instruction_input()};
+
+        set_if(mem >= 0x80, C);
+        mem <<= 1;
+        set_if(mem >= 0x80, N);
+        set_if(mem == 0x00, Z);
+
+        write_instruction_output(mem);
+    }
+
+    void lsr() {
+        std::uint8_t mem{read_instruction_input()};
+
+        set_if(static_cast<bool>(mem & 1), C);
+        mem >>= 1;
+        set_if(false,       N);
+        set_if(mem == 0x00, Z);
+
+        write_instruction_output(mem);
+    }
+
+    void rol() {
+        std::uint8_t mem{read_instruction_input()};
+
+        std::uint8_t carry_in{static_cast<bool>(m_regs.sr & C) ? std::uint8_t{1} : std::uint8_t{0}};
+        std::uint8_t carry_out{static_cast<std::uint8_t>(mem >> 7)};
+
+        mem <<= 1;
+        mem += carry_in;
+
+        set_if(carry_out, C);
+        set_if(mem >= 0x80, N);
+        set_if(mem == 0x00, Z);
+
+        write_instruction_output(mem);
+    }
+
+    void ror() {
+        std::uint8_t mem{read_instruction_input()};
+
+        std::uint8_t carry_in{static_cast<bool>(m_regs.sr & C) ? std::uint8_t{0x80} : std::uint8_t{0}};
+        std::uint8_t carry_out{static_cast<std::uint8_t>(mem & 1)};
+
+        mem >>= 1;
+        mem += carry_in;
+
+        set_if(carry_out, C);
+        set_if(mem >= 0x80, N);
+        set_if(mem == 0x00, Z);
+
+        write_instruction_output(mem);
+    }
+
     inline void set_if(bool cond, std::uint8_t status) {
         if (cond) {
             m_regs.sr |= status;
@@ -594,7 +672,12 @@ private:
         {
         case 0: goto immediate;
         case 1: goto zero_page;
-        case 2: goto unsupported;;
+        case 2:
+            if (m_instruction.parts.oper < 4) {
+                goto accumulator;
+            } else {
+                goto unsupported;
+            }
         case 3: goto absolute;
         case 4: goto unsupported;
         case 5:
@@ -627,6 +710,9 @@ private:
         case 7: goto absolute_x;
         default: goto unsupported;
         }
+
+        accumulator:
+        return m_regs.ac;
 
         immediate:
         return m_immediate8;
@@ -702,7 +788,12 @@ private:
         {
         case 0: goto unsupported;
         case 1: goto zero_page;
-        case 2: goto unsupported;;
+        case 2:
+            if (m_instruction.parts.oper < 4) {
+                goto accumulator;
+            } else {
+                goto unsupported;
+            }
         case 3: goto absolute;
         case 4: goto unsupported;
         case 5:
@@ -736,23 +827,33 @@ private:
         default: goto unsupported;
         }
 
+        accumulator:
+        m_regs.ac = data;
+        return;
+
         absolute:
-        return m_bus->write(m_immediate16, data);
+        m_bus->write(m_immediate16, data);
+        return;
 
         absolute_x:
-        return m_bus->write(m_immediate16 + m_regs.xi, data);
+        m_bus->write(m_immediate16 + m_regs.xi, data);
+        return;
 
         absolute_y:
-        return m_bus->write(m_immediate16 + m_regs.yi, data);
+        m_bus->write(m_immediate16 + m_regs.yi, data);
+        return;
 
         zero_page:
-        return m_bus->write(m_immediate8, data);
+        m_bus->write(m_immediate8, data);
+        return;
 
         zero_page_x:
-        return m_bus->write((m_immediate8 + m_regs.xi) & 0xFF, data);
+        m_bus->write((m_immediate8 + m_regs.xi) & 0xFF, data);
+        return;
 
         zero_page_y:
-        return m_bus->write((m_immediate8 + m_regs.yi) & 0xFF, data);
+        m_bus->write((m_immediate8 + m_regs.yi) & 0xFF, data);
+        return;
 
         indirect_x:
         {
