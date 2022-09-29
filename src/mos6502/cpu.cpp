@@ -78,6 +78,8 @@ public:
             m_dispatch[i] = &Cpu::Impl::illegal;
         }
 
+        m_dispatch[0xEA] = &Cpu::Impl::nop;
+
         m_dispatch[0x18] = &Cpu::Impl::clc;
         m_dispatch[0xD8] = &Cpu::Impl::cld;
         m_dispatch[0x58] = &Cpu::Impl::cli;
@@ -279,6 +281,9 @@ private:
 
     [[ noreturn ]] void illegal() {
         throw std::runtime_error("Illegal instruction hit!");
+    }
+
+    void nop() {
     }
 
     void clc() {

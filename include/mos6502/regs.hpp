@@ -13,5 +13,12 @@ struct Registers final {
     std::uint16_t pc;  /// Program counter
 };
 
+constexpr bool operator==(Registers const& lhs, Registers const& rhs) {
+    return lhs.pc == rhs.pc && lhs.sp == rhs.sp && lhs.sr == rhs.sr &&
+           lhs.ac == rhs.ac && lhs.xi == rhs.xi && lhs.yi == rhs.yi;
+}
+
+
+
 static_assert(sizeof(Registers) == 8, "");
 }

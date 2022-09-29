@@ -1461,3 +1461,15 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ROR]" ) {
     REQUIRE(cpu.regs().ac == 0x01);
     REQUIRE(cpu.regs().sr == mos6502::C);
 }
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[NOP]" ) {
+    mock_bus->mockAddressValue(0x00, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x01, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x02, 0xEA); // NOP
+
+    auto regs = cpu.regs();
+    regs.pc = 0x01;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(regs == cpu.regs());
+}
