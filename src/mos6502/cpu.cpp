@@ -113,6 +113,9 @@ public:
         m_dispatch[0x39] = &Cpu::Impl::amd;
         m_dispatch[0x3D] = &Cpu::Impl::amd;
 
+        m_dispatch[0x24] = &Cpu::Impl::bit;
+        m_dispatch[0x2C] = &Cpu::Impl::bit;
+
         m_dispatch[0x01] = &Cpu::Impl::ora;
         m_dispatch[0x05] = &Cpu::Impl::ora;
         m_dispatch[0x09] = &Cpu::Impl::ora;
@@ -381,6 +384,19 @@ private:
         m_regs.ac = res;
         set_if(n_out, N);
         set_if(z_out, Z);
+    }
+
+    void bit() {
+        std::uint8_t acc{m_regs.ac};
+        std::uint8_t mem{read_instruction_input()};
+
+        std::uint8_t res{};
+        std::uint8_t z_out{};
+
+        __asm__ __volatile__("andb %%bl, %%al" : "=a" (res) : "a" (acc), "b" (mem));
+        __asm__ __volatile__("setz %0" : "=g" (z_out));
+
+        m_regs.sr = (m_regs.sr & 0x3D) | (mem & 0xC0) | ((z_out << 1) & 0x02);
     }
 
     void eor() {

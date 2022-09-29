@@ -519,6 +519,28 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[AND]" ) {
     REQUIRE(cpu.regs().sr == mos6502::Z);
 }
 
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BIT]" ) {
+    mock_bus->mockAddressValue(0x00, 0x24); // LDA
+    mock_bus->mockAddressValue(0x01, 0xFF); // ZPG
+
+    mock_bus->mockAddressValue(0x02, 0x2C); // LDA
+    mock_bus->mockAddressValue(0x03, 0xEF); // ABS LO
+    mock_bus->mockAddressValue(0x04, 0xBE); // ABS HI
+
+    mock_bus->mockAddressValue(0x00FF, 0xFF);
+    mock_bus->mockAddressValue(0xBEEF, 0x00);
+
+    REQUIRE(cpu.step() == 3U);
+    REQUIRE(cpu.regs().pc == 2U);
+    REQUIRE(cpu.regs().ac == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::V | mos6502::Z));
+
+    REQUIRE(cpu.step() == 4U);
+    REQUIRE(cpu.regs().pc == 5U);
+    REQUIRE(cpu.regs().ac == 0x00);
+    REQUIRE(cpu.regs().sr == mos6502::Z);
+}
+
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ORA]" ) {
     mock_bus->mockAddressValue(0x00, 0x09); // ORA
     mock_bus->mockAddressValue(0x01, 0x00); // IMM
