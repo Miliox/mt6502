@@ -73,6 +73,8 @@ public:
     {
         static_cast<void>(m_padding);
 
+        m_regs.sp = 0x1FF;
+
         for (std::size_t i{0U}; i < m_dispatch.size(); ++i)
         {
             m_dispatch[i] = &Cpu::Impl::illegal;
@@ -240,6 +242,11 @@ public:
         m_dispatch[0x6E] = &Cpu::Impl::ror;
         m_dispatch[0x76] = &Cpu::Impl::ror;
         m_dispatch[0x7E] = &Cpu::Impl::ror;
+
+        m_dispatch[0x48] = &Cpu::Impl::pha;
+        m_dispatch[0x08] = &Cpu::Impl::php;
+        m_dispatch[0x68] = &Cpu::Impl::pha;
+        m_dispatch[0x28] = &Cpu::Impl::pha;
     }
 
     Registers& regs()
@@ -654,6 +661,26 @@ private:
         set_if(mem == 0x00, Z);
 
         write_instruction_output(mem);
+    }
+
+    void pha() {
+        m_bus->write(m_regs.sp, m_regs.ac);
+        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp - 1U) & 0x00FF);
+    }
+
+    void php() {
+        m_bus->write(m_regs.sp, m_regs.sr);
+        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp - 1U) & 0x00FF);
+    }
+
+    void pla() {
+        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
+        m_regs.ac = m_bus->read(m_regs.sp);
+    }
+
+    void plp() {
+        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
+        m_regs.sr = m_bus->read(m_regs.sp) & 0xCF;
     }
 
     inline void set_if(bool cond, std::uint8_t status) {
