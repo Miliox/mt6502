@@ -83,8 +83,12 @@ public:
         }
 
         m_dispatch[0xEA] = &Cpu::Impl::nop;
+
         m_dispatch[0x00] = &Cpu::Impl::brk;
         m_dispatch[0x40] = &Cpu::Impl::rti;
+
+        m_dispatch[0x20] = &Cpu::Impl::jsr;
+        m_dispatch[0x60] = &Cpu::Impl::rts;
 
         m_dispatch[0x18] = &Cpu::Impl::clc;
         m_dispatch[0xD8] = &Cpu::Impl::cld;
@@ -290,7 +294,9 @@ private:
     std::array<void (Cpu::Impl::*)(), 256> m_dispatch{};
 
     [[ noreturn ]] void illegal() {
-        throw std::runtime_error("Illegal instruction hit!");
+        std::stringstream ss{};
+        ss << "Illegal instruction: " << std::uppercase << std::hex << std::setw(2) << static_cast<std::int64_t>(m_instruction.opcode);
+        throw std::runtime_error(ss.str());
     }
 
     void brk() {
@@ -705,6 +711,18 @@ private:
 
     void rti() {
         plp();
+        rts();
+    }
+
+    void jsr() {
+        std::uint8_t const pc_lo = (m_regs.pc >> 0) & 0xFF;
+        std::uint8_t const pc_hi = (m_regs.pc >> 8) & 0xFF;
+        push(pc_hi);
+        push(pc_lo);
+        m_regs.pc = m_immediate16;
+    }
+
+    void rts() {
         std::uint8_t const pc_lo = pull();
         std::uint8_t const pc_hi = pull();
         m_regs.pc = ((pc_hi << 8) & 0xFF00) | pc_lo;

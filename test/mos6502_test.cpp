@@ -1593,3 +1593,26 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BRK,RTI]" ) {
     REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
     REQUIRE(cpu.regs().sp == 0x1FF);
 }
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[JSR,RTS]" ) {
+    mock_bus->mockAddressValue(0x00, 0x20); // JSR
+    mock_bus->mockAddressValue(0x01, 0x40); // ABS,LO
+    mock_bus->mockAddressValue(0x02, 0x80); // ABS,HI
+
+    mock_bus->mockAddressValue(0x03, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x04, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x05, 0xEA); // NOP
+
+    mock_bus->mockAddressValue(0x8040, 0x60); // RTS
+    mock_bus->mockAddressValue(0x8041, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x8042, 0xEA); // NOP
+
+    REQUIRE(cpu.step() == 6U);
+    REQUIRE(cpu.regs().pc == 0x8040);
+
+    mock_bus->mockAddressValue(0x1FF, mock_bus->readWrittenValue(0x1FF));
+    mock_bus->mockAddressValue(0x1FE, mock_bus->readWrittenValue(0x1FE));
+
+    REQUIRE(cpu.step() == 6U);
+    REQUIRE(cpu.regs().pc == 0x03);
+}
