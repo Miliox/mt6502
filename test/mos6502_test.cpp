@@ -1527,9 +1527,9 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[PLA]" ) {
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[PLP]" ) {
-    mock_bus->mockAddressValue(0x00, 0x08); // PLA
-    mock_bus->mockAddressValue(0x01, 0x08); // PLA
-    mock_bus->mockAddressValue(0x02, 0x08); // PLA
+    mock_bus->mockAddressValue(0x00, 0x28); // PLP
+    mock_bus->mockAddressValue(0x01, 0x28); // PLP
+    mock_bus->mockAddressValue(0x02, 0x28); // PLP
 
     mock_bus->mockAddressValue(0x03, 0xEA); // NOP
     mock_bus->mockAddressValue(0x04, 0xEA); // NOP
@@ -1539,21 +1539,36 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[PLP]" ) {
     mock_bus->mockAddressValue(0x1FE, 0x00);
     mock_bus->mockAddressValue(0x1FF, 0x0F);
 
-    REQUIRE(cpu.step() == 3U);
+    REQUIRE(cpu.step() == 4U);
+
     REQUIRE(cpu.regs().pc == 1U);
     REQUIRE(cpu.regs().ac == 0x00);
     REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::Z | mos6502::N | mos6502::C | mos6502::D | mos6502::V | mos6502::I));
     REQUIRE(cpu.regs().sp == 0x1FD);
 
-    REQUIRE(cpu.step() == 3U);
+    REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 2U);
-    REQUIRE(cpu.regs().ac == 0x80);
     REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
     REQUIRE(cpu.regs().sp == 0x1FE);
 
-    REQUIRE(cpu.step() == 3U);
+    REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 3U);
-    REQUIRE(cpu.regs().ac == 0x7F);
     REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::D | mos6502::I | mos6502::Z | mos6502::C));
     REQUIRE(cpu.regs().sp == 0x1FF);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BRK]" ) {
+    mock_bus->mockAddressValue(0x00, 0x00); // BRK
+    mock_bus->mockAddressValue(0x01, 0xFF); // #MARK
+    mock_bus->mockAddressValue(0x02, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x03, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x04, 0xEA); // NOP
+
+    mock_bus->mockAddressValue(0xFFFE, 0xEF); // LO
+    mock_bus->mockAddressValue(0xFFFF, 0xBE); // HI
+
+    REQUIRE(cpu.step() == 7U);
+    REQUIRE(cpu.regs().pc == 0xBEEF);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::I));
+    REQUIRE(cpu.regs().sp == 0x1FC);
 }

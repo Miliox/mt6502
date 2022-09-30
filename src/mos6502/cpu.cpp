@@ -24,9 +24,10 @@ union Instruction
 static_assert(sizeof(Instruction) == 1);
 
 /// Lookup Table for Instruction Length
+/// @note BRK (00) instruction length includes mark byte
 static std::array<std::uint8_t, 256> InstructionLength = {
 //  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F  // (Low/High) Nibble
-    1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 0, 3, 3, 0, // 0
+    2, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 0, 3, 3, 0, // 0
     2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, // 1
     3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, // 2
     2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0, // 3
@@ -82,6 +83,7 @@ public:
         }
 
         m_dispatch[0xEA] = &Cpu::Impl::nop;
+        m_dispatch[0x00] = &Cpu::Impl::brk;
 
         m_dispatch[0x18] = &Cpu::Impl::clc;
         m_dispatch[0xD8] = &Cpu::Impl::cld;
@@ -263,10 +265,9 @@ public:
 
         std::uint8_t length{InstructionLength[m_instruction.opcode]};
         std::uint8_t cycles{InstructionCycles[m_instruction.opcode]};
+        m_regs.pc += length;
 
         (*this.*m_dispatch[m_instruction.opcode])();
-
-        m_regs.pc += length;
         return cycles + m_extra_cycles;
     }
 
@@ -292,7 +293,22 @@ private:
     }
 
     void brk() {
+        std::uint8_t const pc_lo = (m_regs.pc >> 0) & 0xFF;
+        std::uint8_t const pc_hi = (m_regs.pc >> 8) & 0xFF;
 
+        std::uint8_t const int_lo = m_bus->read(0xFFFE);
+        std::uint8_t const int_hi = m_bus->read(0xFFFF);
+
+        // Save current context
+        push(pc_hi);
+        push(pc_lo);
+        push(m_regs.sr);
+
+        // Interrupt handler
+        m_regs.pc = ((int_hi << 8) | int_lo) & 0xFFFF;
+
+        // Disable Interrupts
+        m_regs.sr |= I;
     }
 
     void clc() {
@@ -669,13 +685,11 @@ private:
     }
 
     void pha() {
-        m_bus->write(m_regs.sp, m_regs.ac);
-        m_regs.sp = (m_regs.sp & 0xFF00) | (((m_regs.sp & 0xFF) - 1U) & 0xFF);
+        push(m_regs.ac);
     }
 
     void php() {
-        m_bus->write(m_regs.sp, m_regs.sr);
-        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp - 1U) & 0x00FF);
+        push(m_regs.sr);
     }
 
     void pla() {
@@ -687,7 +701,12 @@ private:
 
     void plp() {
         m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
-        m_regs.sr = m_bus->read(m_regs.sp) & 0xCF;
+        m_regs.sr = (m_bus->read(m_regs.sp) & 0xCF) | (m_regs.sr & 0x30);
+    }
+
+    inline void push(std::uint8_t const arg) {
+        m_bus->write(m_regs.sp, arg);
+        m_regs.sp = (m_regs.sp & 0xFF00) | (((m_regs.sp & 0xFF) - 1U) & 0xFF);
     }
 
     inline void set_if(bool cond, std::uint8_t status) {
