@@ -61,7 +61,7 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SEC]") {
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 1U);
-    REQUIRE(cpu.regs().sr == mos6502::C);
+    REQUIRE(cpu.regs().sr == (mos6502::C | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SED]" ) {
@@ -69,7 +69,7 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SED]" ) {
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 1U);
-    REQUIRE(cpu.regs().sr == mos6502::D);
+    REQUIRE(cpu.regs().sr == (mos6502::D | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SEI]" ) {
@@ -77,7 +77,7 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SEI]" ) {
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 1U);
-    REQUIRE(cpu.regs().sr == mos6502::I);
+    REQUIRE(cpu.regs().sr == (mos6502::I | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[CLC]" ) {
@@ -189,92 +189,92 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[LDA,LDX,LDY]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 0x02);
     REQUIRE(cpu.regs().ac == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x05);
     REQUIRE(cpu.regs().ac == 0U);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 0x07);
     REQUIRE(cpu.regs().ac == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 0x09);
     REQUIRE(cpu.regs().xi == 0x10);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x0B);
     REQUIRE(cpu.regs().ac == 0x7F);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x0E);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 0x10);
     REQUIRE(cpu.regs().yi == 2U);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x13);
     REQUIRE(cpu.regs().ac == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 6U);
     REQUIRE(cpu.regs().pc == 0x15);
     REQUIRE(cpu.regs().ac == 0U);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 5U);
     REQUIRE(cpu.regs().pc == 0x17);
     REQUIRE(cpu.regs().ac == 0x40);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 0x19);
     REQUIRE(cpu.regs().xi == 0xA9);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x1B);
     REQUIRE(cpu.regs().xi == 0xAD);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x1E);
     REQUIRE(cpu.regs().xi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x21);
     REQUIRE(cpu.regs().xi == 0x40);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 0x23);
     REQUIRE(cpu.regs().yi == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x25);
     REQUIRE(cpu.regs().yi == 0x7F);
-    REQUIRE(cpu.regs().sr == 0);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x28);
     REQUIRE(cpu.regs().yi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 0x2B);
     REQUIRE(cpu.regs().yi == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ADC]" ) {
@@ -300,32 +300,32 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ADC]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0x50);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().ac == 0x60);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().ac == 0x80);
-    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::V));
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::V | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 8U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == (mos6502::V | mos6502::Z | mos6502::C));
+    REQUIRE(cpu.regs().sr == (mos6502::V | mos6502::Z | mos6502::C | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 9U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == (mos6502::V | mos6502::Z));
+    REQUIRE(cpu.regs().sr == (mos6502::V | mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 0x0B);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SBC]" ) {
@@ -347,27 +347,27 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SBC]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0xFF);
-    REQUIRE(cpu.regs().sr == (mos6502::N));
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().ac == 0xFF);
-    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::C));
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::C | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 5U);
     REQUIRE(cpu.regs().ac == 0x7F);
-    REQUIRE(cpu.regs().sr == mos6502::C);
+    REQUIRE(cpu.regs().sr == (mos6502::C | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().ac == 0x7F);
-    REQUIRE(cpu.regs().sr == 0);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 8U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C));
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[CMP]" ) {
@@ -388,22 +388,22 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[CMP]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().ac == 0x80U);
-    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C));
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().ac == 0x80U);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 8U);
     REQUIRE(cpu.regs().ac == 0x80U);
-    REQUIRE(cpu.regs().sr == mos6502::C);
+    REQUIRE(cpu.regs().sr == (mos6502::C | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[CPX]" ) {
@@ -426,22 +426,22 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[CPX]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().xi == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().xi == 0x80U);
-    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C));
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().xi == 0x80U);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 9U);
     REQUIRE(cpu.regs().xi == 0x80U);
-    REQUIRE(cpu.regs().sr == mos6502::C);
+    REQUIRE(cpu.regs().sr == (mos6502::C | mos6502::U | mos6502::B));
 }
 
 
@@ -465,22 +465,22 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[CPY]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().yi == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().yi == 0x80U);
-    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C));
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::C | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().yi == 0x80U);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 9U);
     REQUIRE(cpu.regs().yi == 0x80U);
-    REQUIRE(cpu.regs().sr == mos6502::C);
+    REQUIRE(cpu.regs().sr == (mos6502::C | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[AND]" ) {
@@ -501,22 +501,22 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[AND]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().ac == 0xA5);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().ac == 0x25);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 8U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BIT]" ) {
@@ -533,12 +533,12 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BIT]" ) {
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::V | mos6502::Z));
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::V | mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 5U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ORA]" ) {
@@ -556,17 +556,17 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ORA]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().ac == 0x0F);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().ac == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[EOR]" ) {
@@ -584,17 +584,17 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[EOR]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0x0F);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().ac == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().ac == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INX]" ) {
@@ -611,17 +611,17 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INX]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().xi == 0xFE);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().xi == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().xi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INY]" ) {
@@ -638,17 +638,17 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INY]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().yi == 0xFE);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().yi == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().yi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INC]" ) {
@@ -679,12 +679,12 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INC]" ) {
     REQUIRE(cpu.step() == 5U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(mock_bus->readWrittenValue(0x80) == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 6U);
     REQUIRE(cpu.regs().pc == 5U);
     REQUIRE(mock_bus->readWrittenValue(0x8080) == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 7U);
@@ -693,12 +693,12 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[INC]" ) {
     REQUIRE(cpu.step() == 7U);
     REQUIRE(cpu.regs().pc == 0x0A);
     REQUIRE(mock_bus->readWrittenValue(0x80A0) == 0x41);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 6U);
     REQUIRE(cpu.regs().pc == 0x0C);
     REQUIRE(mock_bus->readWrittenValue(0x00A0) == 0x02);
-    REQUIRE(cpu.regs().sr == 0U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEC]" ) {
@@ -729,12 +729,12 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEC]" ) {
     REQUIRE(cpu.step() == 5U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(mock_bus->readWrittenValue(0x80) == 0xFE);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 6U);
     REQUIRE(cpu.regs().pc == 5U);
     REQUIRE(mock_bus->readWrittenValue(0x8080) == 0x7E);
-    REQUIRE(cpu.regs().sr == 0);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 7U);
@@ -743,12 +743,12 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEC]" ) {
     REQUIRE(cpu.step() == 7U);
     REQUIRE(cpu.regs().pc == 0x0A);
     REQUIRE(mock_bus->readWrittenValue(0x80A0) == 0x3F);
-    REQUIRE(cpu.regs().sr == 0);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 6U);
     REQUIRE(cpu.regs().pc == 0x0C);
     REQUIRE(mock_bus->readWrittenValue(0x00A0) == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEX]" ) {
@@ -765,17 +765,17 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEX]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().xi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().xi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().xi == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEY]" ) {
@@ -792,17 +792,17 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[DEY]" ) {
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().yi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().yi == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[STA]" ) {
@@ -911,13 +911,13 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[STX]" ) {
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x00);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x00);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(mock_bus->readWrittenValue(0x0080) == 0x01);
 
@@ -925,13 +925,13 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[STX]" ) {
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 8U);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(mock_bus->readWrittenValue(0x0081) == 0x01);
 
@@ -939,7 +939,7 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[STX]" ) {
     REQUIRE(cpu.regs().pc == 0x0B);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(mock_bus->readWrittenValue(0x4082) == 0x01);
 }
@@ -965,13 +965,13 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[STY]" ) {
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().xi == 0x00);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 3U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().xi == 0x00);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(mock_bus->readWrittenValue(0x0080) == 0x01);
 
@@ -979,13 +979,13 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[STY]" ) {
     REQUIRE(cpu.regs().pc == 6U);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(cpu.step() == 4U);
     REQUIRE(cpu.regs().pc == 8U);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(mock_bus->readWrittenValue(0x0081) == 0x01);
 
@@ -993,7 +993,7 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[STY]" ) {
     REQUIRE(cpu.regs().pc == 0x0B);
     REQUIRE(cpu.regs().xi == 0x01);
     REQUIRE(cpu.regs().yi == 0x01);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 
     REQUIRE(mock_bus->readWrittenValue(0x4082) == 0x01);
 }
@@ -1013,33 +1013,33 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[TAX]" ) {
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0x80);
     REQUIRE(cpu.regs().xi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
-    cpu.regs().sr = 0x00;
+    cpu.regs().sr = (mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().ac == 0x80);
     REQUIRE(cpu.regs().xi == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     cpu.regs().ac = 0x00;
-    cpu.regs().sr = 0x00;
+    cpu.regs().sr = (mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().ac == 0x00);
     REQUIRE(cpu.regs().xi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     cpu.regs().ac = 0x7F;
-    cpu.regs().sr = mos6502::Z | mos6502::N;
+    cpu.regs().sr = mos6502::Z | mos6502::N | mos6502::U | mos6502::B;
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 5U);
     REQUIRE(cpu.regs().ac == 0x7F);
     REQUIRE(cpu.regs().xi == 0x07F);
-    REQUIRE(cpu.regs().sr == 0);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[TAY]" ) {
@@ -1057,33 +1057,33 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[TAY]" ) {
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().ac == 0x80);
     REQUIRE(cpu.regs().yi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
-    cpu.regs().sr = 0;
+    cpu.regs().sr = (mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().ac == 0x80);
     REQUIRE(cpu.regs().yi == 0x80);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     cpu.regs().ac = 0x00;
-    cpu.regs().sr = 0x00;
+    cpu.regs().sr = (mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 4U);
     REQUIRE(cpu.regs().ac == 0x00);
     REQUIRE(cpu.regs().yi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     cpu.regs().ac = 0x7F;
-    cpu.regs().sr = mos6502::Z | mos6502::N;
+    cpu.regs().sr = (mos6502::Z | mos6502::N | mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 5U);
     REQUIRE(cpu.regs().ac == 0x7F);
     REQUIRE(cpu.regs().yi == 0x07F);
-    REQUIRE(cpu.regs().sr == 0);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[TSX]" ) {
@@ -1095,31 +1095,31 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[TSX]" ) {
     mock_bus->mockAddressValue(0x04, 0xEA); // NOP
 
     cpu.regs().sp = 0x01FF;
-    cpu.regs().sr = 0;
+    cpu.regs().sr = (mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 1U);
     REQUIRE(cpu.regs().sp == 0x01FF);
     REQUIRE(cpu.regs().xi == 0xFF);
-    REQUIRE(cpu.regs().sr == mos6502::N);
+    REQUIRE(cpu.regs().sr == (mos6502::N | mos6502::U | mos6502::B));
 
     cpu.regs().sp = 0x0100;
-    cpu.regs().sr = 0;
+    cpu.regs().sr = (mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
     REQUIRE(cpu.regs().sp == 0x0100);
     REQUIRE(cpu.regs().xi == 0x00);
-    REQUIRE(cpu.regs().sr == mos6502::Z);
+    REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 
     cpu.regs().sp = 0x017F;
-    cpu.regs().sr = mos6502::N | mos6502::Z;
+    cpu.regs().sr = (mos6502::N | mos6502::Z | mos6502::U | mos6502::B);
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 3U);
     REQUIRE(cpu.regs().sp == 0x017F);
     REQUIRE(cpu.regs().xi == 0x7F);
-    REQUIRE(cpu.regs().sr == 0x00);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[TXA]" ) {
@@ -1463,6 +1463,18 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ROR]" ) {
 }
 
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[NOP]" ) {
+    mock_bus->mockAddressValue(0x00, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x01, 0xEA); // NOP
+    mock_bus->mockAddressValue(0x02, 0xEA); // NOP
+
+    auto regs = cpu.regs();
+    regs.pc = 0x01;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(regs == cpu.regs());
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[PHA]" ) {
     mock_bus->mockAddressValue(0x00, 0xEA); // NOP
     mock_bus->mockAddressValue(0x01, 0xEA); // NOP
     mock_bus->mockAddressValue(0x02, 0xEA); // NOP

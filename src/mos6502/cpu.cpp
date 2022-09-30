@@ -74,6 +74,7 @@ public:
         static_cast<void>(m_padding);
 
         m_regs.sp = 0x1FF;
+        m_regs.sr = U | B;
 
         for (std::size_t i{0U}; i < m_dispatch.size(); ++i)
         {
