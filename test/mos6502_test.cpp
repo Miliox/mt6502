@@ -1635,3 +1635,115 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[JMP]" ) {
     REQUIRE(cpu.step() == 5U);
     REQUIRE(cpu.regs().pc == 0x2010);
 }
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BCC,BCS]" ) {
+    mock_bus->mockAddressValue(0x00, 0xB0); // BCS
+    mock_bus->mockAddressValue(0x01, 0x01); // REL (+1)
+    mock_bus->mockAddressValue(0x02, 0xEA); // NOP
+
+    mock_bus->mockAddressValue(0x03, 0x90); // BCC
+    mock_bus->mockAddressValue(0x04, 0xFD); // REL (-3)
+    mock_bus->mockAddressValue(0x05, 0xEA); // NOP
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+
+    cpu.regs().sr |= mos6502::C;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 5U);
+
+    cpu.regs().pc = 0x00;
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 3U);
+
+    cpu.regs().sr &= ~mos6502::C;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BEQ,BNE]" ) {
+    mock_bus->mockAddressValue(0x00, 0xF0); // BEQ
+    mock_bus->mockAddressValue(0x01, 0x01); // REL (+1)
+    mock_bus->mockAddressValue(0x02, 0xEA); // NOP
+
+    mock_bus->mockAddressValue(0x03, 0xD0); // BNE
+    mock_bus->mockAddressValue(0x04, 0xFD); // REL (-3)
+    mock_bus->mockAddressValue(0x05, 0xEA); // NOP
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+
+    cpu.regs().sr |= mos6502::Z;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 5U);
+
+    cpu.regs().pc = 0x00;
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 3U);
+
+    cpu.regs().sr &= ~mos6502::Z;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BMI,BPL]" ) {
+    mock_bus->mockAddressValue(0x00, 0x30); // BMI
+    mock_bus->mockAddressValue(0x01, 0x01); // REL (+1)
+    mock_bus->mockAddressValue(0x02, 0xEA); // NOP
+
+    mock_bus->mockAddressValue(0x03, 0x10); // BPL
+    mock_bus->mockAddressValue(0x04, 0xFD); // REL (-3)
+    mock_bus->mockAddressValue(0x05, 0xEA); // NOP
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+
+    cpu.regs().sr |= mos6502::N;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 5U);
+
+    cpu.regs().pc = 0x00;
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 3U);
+
+    cpu.regs().sr &= ~mos6502::N;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BVS,BVC]" ) {
+    mock_bus->mockAddressValue(0x00, 0x70); // BVS
+    mock_bus->mockAddressValue(0x01, 0x01); // REL (+1)
+    mock_bus->mockAddressValue(0x02, 0xEA); // NOP
+
+    mock_bus->mockAddressValue(0x03, 0x50); // BVC
+    mock_bus->mockAddressValue(0x04, 0xFD); // REL (-3)
+    mock_bus->mockAddressValue(0x05, 0xEA); // NOP
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+
+    cpu.regs().sr |= mos6502::V;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 5U);
+
+    cpu.regs().pc = 0x00;
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 3U);
+
+    cpu.regs().sr &= ~mos6502::V;
+
+    REQUIRE(cpu.step() == 2U);
+    REQUIRE(cpu.regs().pc == 2U);
+}

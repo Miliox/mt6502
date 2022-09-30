@@ -93,6 +93,15 @@ public:
         m_dispatch[0x4C] = &Cpu::Impl::jmp_abs;
         m_dispatch[0x6C] = &Cpu::Impl::jmp_ind;
 
+        m_dispatch[0x90] = &Cpu::Impl::bcc;
+        m_dispatch[0xB0] = &Cpu::Impl::bcs;
+        m_dispatch[0xF0] = &Cpu::Impl::beq;
+        m_dispatch[0x30] = &Cpu::Impl::bmi;
+        m_dispatch[0xD0] = &Cpu::Impl::bne;
+        m_dispatch[0x10] = &Cpu::Impl::bpl;
+        m_dispatch[0x50] = &Cpu::Impl::bvc;
+        m_dispatch[0x70] = &Cpu::Impl::bvs;
+
         m_dispatch[0x18] = &Cpu::Impl::clc;
         m_dispatch[0xD8] = &Cpu::Impl::cld;
         m_dispatch[0x58] = &Cpu::Impl::cli;
@@ -739,6 +748,58 @@ private:
         std::uint8_t const pc_lo = m_bus->read(m_immediate16);
         std::uint8_t const pc_hi = m_bus->read(m_immediate16 + 1U);
         m_regs.pc = ((pc_hi << 8) & 0xFF00) | pc_lo;
+    }
+
+    void bcc() {
+        if ((m_regs.sr & C) == 0) {
+            jmp_rel();
+        }
+    }
+
+    void bcs() {
+        if ((m_regs.sr & C) == C) {
+            jmp_rel();
+        }
+    }
+
+    void beq() {
+        if ((m_regs.sr & Z) == Z) {
+            jmp_rel();
+        }
+    }
+
+    void bne() {
+        if ((m_regs.sr & Z) == 0) {
+            jmp_rel();
+        }
+    }
+
+    void bmi() {
+        if ((m_regs.sr & N) == N) {
+            jmp_rel();
+        }
+    }
+
+    void bpl() {
+        if ((m_regs.sr & N) == 0) {
+            jmp_rel();
+        }
+    }
+
+    void bvs() {
+        if ((m_regs.sr & V) == V) {
+            jmp_rel();
+        }
+    }
+
+    void bvc() {
+        if ((m_regs.sr & V) == 0) {
+            jmp_rel();
+        }
+    }
+
+    inline void jmp_rel() {
+        *(reinterpret_cast<std::int16_t*>(&m_regs.pc)) += static_cast<std::int16_t>(static_cast<std::int8_t>(m_immediate8));
     }
 
     inline void push(std::uint8_t const arg) {
