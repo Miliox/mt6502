@@ -246,8 +246,8 @@ public:
 
         m_dispatch[0x48] = &Cpu::Impl::pha;
         m_dispatch[0x08] = &Cpu::Impl::php;
-        m_dispatch[0x68] = &Cpu::Impl::pha;
-        m_dispatch[0x28] = &Cpu::Impl::pha;
+        m_dispatch[0x68] = &Cpu::Impl::pla;
+        m_dispatch[0x28] = &Cpu::Impl::plp;
     }
 
     Registers& regs()
@@ -291,7 +291,8 @@ private:
         throw std::runtime_error("Illegal instruction hit!");
     }
 
-    void nop() {
+    void brk() {
+
     }
 
     void clc() {
@@ -320,6 +321,9 @@ private:
 
     void sei() {
         m_regs.sr |= I;
+    }
+
+    void nop() {
     }
 
     void adc() {
@@ -666,7 +670,7 @@ private:
 
     void pha() {
         m_bus->write(m_regs.sp, m_regs.ac);
-        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp - 1U) & 0x00FF);
+        m_regs.sp = (m_regs.sp & 0xFF00) | (((m_regs.sp & 0xFF) - 1U) & 0xFF);
     }
 
     void php() {
@@ -677,6 +681,8 @@ private:
     void pla() {
         m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
         m_regs.ac = m_bus->read(m_regs.sp);
+        set_if(m_regs.ac >= 0x80, N);
+        set_if(m_regs.ac == 0x00, Z);
     }
 
     void plp() {
