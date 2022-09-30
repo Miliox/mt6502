@@ -693,20 +693,23 @@ private:
     }
 
     void pla() {
-        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
-        m_regs.ac = m_bus->read(m_regs.sp);
+        m_regs.ac = pull();
         set_if(m_regs.ac >= 0x80, N);
         set_if(m_regs.ac == 0x00, Z);
     }
 
     void plp() {
-        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
-        m_regs.sr = (m_bus->read(m_regs.sp) & 0xCF) | (m_regs.sr & 0x30);
+        m_regs.sr = (pull() & 0xCF) | (m_regs.sr & 0x30);
     }
 
     inline void push(std::uint8_t const arg) {
         m_bus->write(m_regs.sp, arg);
         m_regs.sp = (m_regs.sp & 0xFF00) | (((m_regs.sp & 0xFF) - 1U) & 0xFF);
+    }
+
+    inline std::uint8_t pull() {
+        m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
+        return m_bus->read(m_regs.sp);
     }
 
     inline void set_if(bool cond, std::uint8_t status) {
