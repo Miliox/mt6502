@@ -84,6 +84,7 @@ public:
 
         m_dispatch[0xEA] = &Cpu::Impl::nop;
         m_dispatch[0x00] = &Cpu::Impl::brk;
+        m_dispatch[0x40] = &Cpu::Impl::rti;
 
         m_dispatch[0x18] = &Cpu::Impl::clc;
         m_dispatch[0xD8] = &Cpu::Impl::cld;
@@ -700,6 +701,13 @@ private:
 
     void plp() {
         m_regs.sr = (pull() & 0xCF) | (m_regs.sr & 0x30);
+    }
+
+    void rti() {
+        plp();
+        std::uint8_t const pc_lo = pull();
+        std::uint8_t const pc_hi = pull();
+        m_regs.pc = ((pc_hi << 8) & 0xFF00) | pc_lo;
     }
 
     inline void push(std::uint8_t const arg) {

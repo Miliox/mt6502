@@ -1,7 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstdint>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <unordered_map>
 
 #include "mos6502/bus.hpp"
@@ -16,7 +18,13 @@ public:
     ~MockBus() override;
 
     std::uint8_t read(std::uint16_t addr) override {
-        return read_map.at(addr);
+        try {
+            return read_map.at(addr);
+        } catch(...) {
+            std::stringstream ss{};
+            ss << "Error: no data mapped at " << std::uppercase << std::hex << std::setw(2) << addr;
+            throw ss.str();
+        }
     }
 
     void write(std::uint16_t addr, std::uint8_t data) override {
@@ -1557,12 +1565,16 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[PLP]" ) {
     REQUIRE(cpu.regs().sp == 0x1FF);
 }
 
-TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BRK]" ) {
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BRK,RTI]" ) {
     mock_bus->mockAddressValue(0x00, 0x00); // BRK
     mock_bus->mockAddressValue(0x01, 0xFF); // #MARK
     mock_bus->mockAddressValue(0x02, 0xEA); // NOP
     mock_bus->mockAddressValue(0x03, 0xEA); // NOP
     mock_bus->mockAddressValue(0x04, 0xEA); // NOP
+
+    mock_bus->mockAddressValue(0xBEEF, 0x40); // RTI
+    mock_bus->mockAddressValue(0xBEF0, 0xEA); // NOP
+    mock_bus->mockAddressValue(0xBEF1, 0xEA); // NOP
 
     mock_bus->mockAddressValue(0xFFFE, 0xEF); // LO
     mock_bus->mockAddressValue(0xFFFF, 0xBE); // HI
@@ -1571,4 +1583,13 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BRK]" ) {
     REQUIRE(cpu.regs().pc == 0xBEEF);
     REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::I));
     REQUIRE(cpu.regs().sp == 0x1FC);
+
+    mock_bus->mockAddressValue(0x1FF, mock_bus->readWrittenValue(0x1FF));
+    mock_bus->mockAddressValue(0x1FE, mock_bus->readWrittenValue(0x1FE));
+    mock_bus->mockAddressValue(0x1FD, mock_bus->readWrittenValue(0x1FD));
+
+    REQUIRE(cpu.step() == 6U);
+    REQUIRE(cpu.regs().pc == 0x02);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B));
+    REQUIRE(cpu.regs().sp == 0x1FF);
 }
