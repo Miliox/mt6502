@@ -90,6 +90,9 @@ public:
         m_dispatch[0x20] = &Cpu::Impl::jsr;
         m_dispatch[0x60] = &Cpu::Impl::rts;
 
+        m_dispatch[0x4C] = &Cpu::Impl::jmp_abs;
+        m_dispatch[0x6C] = &Cpu::Impl::jmp_ind;
+
         m_dispatch[0x18] = &Cpu::Impl::clc;
         m_dispatch[0xD8] = &Cpu::Impl::cld;
         m_dispatch[0x58] = &Cpu::Impl::cli;
@@ -725,6 +728,16 @@ private:
     void rts() {
         std::uint8_t const pc_lo = pull();
         std::uint8_t const pc_hi = pull();
+        m_regs.pc = ((pc_hi << 8) & 0xFF00) | pc_lo;
+    }
+
+    void jmp_abs() {
+        m_regs.pc = m_immediate16;
+    }
+
+    void jmp_ind() {
+        std::uint8_t const pc_lo = m_bus->read(m_immediate16);
+        std::uint8_t const pc_hi = m_bus->read(m_immediate16 + 1U);
         m_regs.pc = ((pc_hi << 8) & 0xFF00) | pc_lo;
     }
 

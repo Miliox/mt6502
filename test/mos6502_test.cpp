@@ -1616,3 +1616,22 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[JSR,RTS]" ) {
     REQUIRE(cpu.step() == 6U);
     REQUIRE(cpu.regs().pc == 0x03);
 }
+
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[JMP]" ) {
+    mock_bus->mockAddressValue(0x00, 0x4C); // JSR
+    mock_bus->mockAddressValue(0x01, 0xEF); // ABS,LO
+    mock_bus->mockAddressValue(0x02, 0xBE); // ABS,HI
+
+    mock_bus->mockAddressValue(0xBEEF, 0x6C); // JSR
+    mock_bus->mockAddressValue(0xBEF0, 0xAB); // IND,LO
+    mock_bus->mockAddressValue(0xBEF1, 0xCA); // IND,HI
+
+    mock_bus->mockAddressValue(0xCAAB, 0x10); // ABS,LO
+    mock_bus->mockAddressValue(0xCAAC, 0x20); // ABS,HI
+
+    REQUIRE(cpu.step() == 3U);
+    REQUIRE(cpu.regs().pc == 0xBEEF);
+
+    REQUIRE(cpu.step() == 5U);
+    REQUIRE(cpu.regs().pc == 0x2010);
+}
