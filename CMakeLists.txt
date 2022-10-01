@@ -75,6 +75,9 @@ message(DEBUG "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 add_library(mos6502 src/mos6502/bus.cpp src/mos6502/cpu.cpp)
 target_include_directories(mos6502 PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
+add_executable(mos6502_bench bench/mos6502_bench.cpp)
+target_link_libraries(mos6502_bench PRIVATE mos6502)
+
 find_package(Catch2 CONFIG REQUIRED)
 
 add_executable(mos6502_test test/mos6502_test.cpp)
