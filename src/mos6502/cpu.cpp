@@ -384,6 +384,24 @@ private:
         __asm__ __volatile__("setz %0" : "=g" (z_out));
 
         m_regs.ac = static_cast<std::uint8_t>(res);
+
+        if (static_cast<bool>(m_regs.sr & D))
+        {
+            std::uint8_t adjustment{};
+            if ((m_regs.ac & 0xF) > 0x9)
+            {
+                adjustment += 0x6;
+            }
+            if (m_regs.ac > 0x99 || c_out)
+            {
+                adjustment += 0x60;
+                c_out = 1U;
+            }
+            m_regs.ac += adjustment;
+            z_out = (m_regs.ac == 0);
+            n_out = (m_regs.ac & 0x80);
+        }
+
         set_if(c_out, C);
         set_if(n_out, N);
         set_if(v_out, V);

@@ -334,6 +334,62 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[ADC]" ) {
     REQUIRE(cpu.regs().sr == (mos6502::Z | mos6502::U | mos6502::B));
 }
 
+TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[Decimal ADC]" ) {
+    mock_bus->mockAddressValue(0x00, 0xF8); // SED
+
+    mock_bus->mockAddressValue(0x01, 0xA9); // LDA
+    mock_bus->mockAddressValue(0x02, 0x10); // IMM
+
+    mock_bus->mockAddressValue(0x03, 0x69); // ADC
+    mock_bus->mockAddressValue(0x04, 0x20); // IMM
+
+    mock_bus->mockAddressValue(0x05, 0x69); // ADC
+    mock_bus->mockAddressValue(0x06, 0x50); // IMM
+
+    mock_bus->mockAddressValue(0x07, 0x69); // ADC
+    mock_bus->mockAddressValue(0x08, 0x19); // IMM
+
+    mock_bus->mockAddressValue(0x09, 0x69); // ADC
+    mock_bus->mockAddressValue(0x0A, 0x01); // IMM
+
+    mock_bus->mockAddressValue(0x0B, 0x69); // ADC
+    mock_bus->mockAddressValue(0x0C, 0xAA); // IMM
+
+    mock_bus->mockAddressValue(0x0D, 0x00); // PAD
+
+    REQUIRE(cpu.step() == 2U); // SED
+    REQUIRE(cpu.step() == 2U); // LDA
+    REQUIRE(cpu.step() == 2U); // ADC
+
+    REQUIRE(cpu.regs().pc == 5U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::D));
+    REQUIRE(cpu.regs().ac == 0x30);
+
+    REQUIRE(cpu.step() == 2U); // ADC
+
+    REQUIRE(cpu.regs().pc == 7U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::D | mos6502::N | mos6502::V));
+    REQUIRE(cpu.regs().ac == 0x80);
+
+    REQUIRE(cpu.step() == 2U); // ADC
+
+    REQUIRE(cpu.regs().pc == 9U);
+    REQUIRE(int{cpu.regs().sr} == (mos6502::U | mos6502::B | mos6502::D | mos6502::N));
+    REQUIRE(cpu.regs().ac == 0x99);
+
+    REQUIRE(cpu.step() == 2U); // ADC
+
+    REQUIRE(cpu.regs().pc == 11U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::D | mos6502::Z | mos6502::C));
+    REQUIRE(cpu.regs().ac == 0x00);
+
+    REQUIRE(cpu.step() == 2U); // ADC
+
+    REQUIRE(cpu.regs().pc == 13U);
+    REQUIRE(cpu.regs().sr == (mos6502::U | mos6502::B | mos6502::D | mos6502::C));
+    REQUIRE(cpu.regs().ac == 0x11);
+}
+
 TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[SBC]" ) {
     mock_bus->mockAddressValue(0x00, 0xE9); // SBC
     mock_bus->mockAddressValue(0x01, 0x00); // IMM
