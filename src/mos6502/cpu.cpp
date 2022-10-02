@@ -1090,4 +1090,16 @@ std::uint8_t Cpu::step() {
     return m_pimpl->step();
 }
 
+bool Cpu::signal_irq() {
+    throw std::runtime_error("not yet implemented");
+}
+
+bool Cpu::signal_nmi() {
+    throw std::runtime_error("not yet implemented");
+}
+
+bool Cpu::signal_reset() {
+    throw std::runtime_error("not yet implemented");
+}
+
 }
