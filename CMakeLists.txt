@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.21)
-project(project)
+project(mt6502)
 
 set(CMAKE_CXX_STANDARD   23)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -72,13 +72,13 @@ endif()
 message(DEBUG "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(DEBUG "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 
-add_library(mos6502 src/mos6502/bus.cpp src/mos6502/cpu.cpp)
-target_include_directories(mos6502 PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
+add_library(${PROJECT_NAME} src/mos6502/bus.cpp src/mos6502/cpu.cpp)
+target_include_directories(${PROJECT_NAME}  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
-add_executable(mos6502_bench bench/mos6502_bench.cpp)
-target_link_libraries(mos6502_bench PRIVATE mos6502)
+add_executable(${PROJECT_NAME}_bench bench/mos6502_bench.cpp)
+target_link_libraries(${PROJECT_NAME}_bench PRIVATE ${PROJECT_NAME} )
 
 find_package(Catch2 CONFIG REQUIRED)
 
-add_executable(mos6502_test test/mos6502_test.cpp)
-target_link_libraries(mos6502_test PRIVATE mos6502 Catch2::Catch2WithMain)
+add_executable(${PROJECT_NAME}_test test/mos6502_test.cpp)
+target_link_libraries(${PROJECT_NAME}_test PRIVATE ${PROJECT_NAME}  Catch2::Catch2WithMain)
