@@ -25,16 +25,13 @@ public:
     std::uint8_t step();
 
     /// Signal maskable interrupt
-    /// @return whether handled
-    bool signal_irq();
+    void signal_irq();
 
     /// Signal non maskable interrupt
-    /// @return whether handled
-    bool signal_nmi();
+    void signal_nmi();
 
     /// Signal reset
-    /// @return whether handled
-    bool signal_reset();
+    void signal_reset();
 
 private:
     class Impl;

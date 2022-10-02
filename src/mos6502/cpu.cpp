@@ -288,6 +288,23 @@ public:
         return cycles + m_extra_cycles;
     }
 
+    void irq() {
+        if ((m_regs.sr & I) == 0) {
+            request_interrupt(0xFFFE);
+        }
+    }
+
+    void nmi() {
+        request_interrupt(0xFFFA);
+    }
+
+    void reset() {
+        std::uint8_t const handler_lo = m_bus->read(0xFFFC);
+        std::uint8_t const handler_hi = m_bus->read(0xFFFD);
+        std::uint16_t const handler = ((handler_hi << 8) | handler_lo) & 0xFFFF;
+        m_regs.pc = handler;
+    }
+
 private:
     std::shared_ptr<IBus> m_bus;
 
@@ -312,22 +329,7 @@ private:
     }
 
     void brk() {
-        std::uint8_t const pc_lo = (m_regs.pc >> 0) & 0xFF;
-        std::uint8_t const pc_hi = (m_regs.pc >> 8) & 0xFF;
-
-        std::uint8_t const int_lo = m_bus->read(0xFFFE);
-        std::uint8_t const int_hi = m_bus->read(0xFFFF);
-
-        // Save current context
-        push(pc_hi);
-        push(pc_lo);
-        push(m_regs.sr);
-
-        // Interrupt handler
-        m_regs.pc = ((int_hi << 8) | int_lo) & 0xFFFF;
-
-        // Disable Interrupts
-        m_regs.sr |= I;
+        request_interrupt(0xFFFE, true);
     }
 
     void clc() {
@@ -816,6 +818,33 @@ private:
         }
     }
 
+    inline void request_interrupt(std::uint16_t addr, bool software = false) {
+        std::uint8_t const pc_lo = (m_regs.pc >> 0) & 0xFF;
+        std::uint8_t const pc_hi = (m_regs.pc >> 8) & 0xFF;
+
+        std::uint8_t const handler_lo = m_bus->read(addr);
+        std::uint8_t const handler_hi = m_bus->read(addr + 1U);
+        std::uint16_t const handler = ((handler_hi << 8) | handler_lo) & 0xFFFF;
+
+        std::uint8_t status = m_regs.sr;
+        if (software) {
+            status |= B;
+        } else {
+            status &= ~B;
+        }
+
+        // Save current context
+        push(pc_hi);
+        push(pc_lo);
+        push(status);
+
+        // Interrupt handler
+        m_regs.pc = handler;
+
+        // Disable Interrupts
+        m_regs.sr |= I;
+    }
+
     inline void jmp_rel() {
         *(reinterpret_cast<std::int16_t*>(&m_regs.pc)) += static_cast<std::int16_t>(static_cast<std::int8_t>(m_immediate8));
     }
@@ -1090,16 +1119,16 @@ std::uint8_t Cpu::step() {
     return m_pimpl->step();
 }
 
-bool Cpu::signal_irq() {
-    throw std::runtime_error("not yet implemented");
+void Cpu::signal_irq() {
+    m_pimpl->irq();
 }
 
-bool Cpu::signal_nmi() {
-    throw std::runtime_error("not yet implemented");
+void Cpu::signal_nmi() {
+    m_pimpl->nmi();
 }
 
-bool Cpu::signal_reset() {
-    throw std::runtime_error("not yet implemented");
+void Cpu::signal_reset() {
+    m_pimpl->reset();
 }
 
 }
