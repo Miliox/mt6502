@@ -1,28 +1,34 @@
 #include "mos6502/syncer.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <limits>
 #include <optional>
 #include <thread>
+#include <utility>
 
 using nanoseconds = std::chrono::nanoseconds;
-using steady_clock = std::chrono::steady_clock;
-using time_point = std::chrono::time_point<std::chrono::steady_clock>;
+using wall_clock = std::chrono::high_resolution_clock;
+using time_point = std::chrono::time_point<wall_clock>;
 
 namespace mos6502
 {
 class Syncer::Impl {
 public:
-    Impl(std::uint64_t const clock_rate, std::uint64_t const frame_rate)
+    Impl(std::uint64_t const clock_rate, std::uint64_t const frame_rate, nanoseconds const spin_threshold)
         : m_clock_rate(clock_rate)
         , m_frame_rate(frame_rate)
         , m_frame_period(1'000'000'000U / frame_rate)
         , m_rem_frame_period(1'000'000'000U % frame_rate)
         , m_ticks_per_frame{clock_rate / frame_rate}
         , m_rem_ticks_per_frame{clock_rate % frame_rate}
+        , m_spin_threshold{spin_threshold}
         , m_frame_ticks{}
+        , m_sub_frame_ticks{}
         , m_overslept_period{}
         , m_last_frame_point{}
         {
+            assert(spin_threshold.count() >= 0);
             static_cast<void>(m_clock_rate);
             static_cast<void>(m_frame_rate);
             static_cast<void>(m_rem_ticks_per_frame);
@@ -33,31 +39,47 @@ public:
 
         // First step initialization
         if (!m_last_frame_point.has_value()) {
-            m_last_frame_point.emplace(steady_clock::now());
+            m_last_frame_point.emplace(wall_clock::now());
         }
 
         // Frame sync
         if (m_frame_ticks >= m_ticks_per_frame) {
             m_frame_ticks -= m_ticks_per_frame;
 
-            time_point const pre_sync_point = steady_clock::now();
+            std::uint64_t const sub_frames = std::min(m_sub_frame_ticks, m_frame_ticks);
+            m_sub_frame_ticks -= sub_frames;
+
+            if (m_sub_frame_ticks == 0) {
+                m_sub_frame_ticks = m_rem_ticks_per_frame;
+            }
+
+            time_point const pre_sync_point = wall_clock::now();
 
             nanoseconds const busy_period = pre_sync_point - m_last_frame_point.value();
             nanoseconds const idle_period = m_frame_period - busy_period - m_overslept_period;
 
-            time_point post_sync_point = pre_sync_point;
+            time_point const sync_point = pre_sync_point + idle_period;
+
+            time_point const wake_up_point = sync_point - m_spin_threshold;
 
             if (idle_period.count() > 0) {
-                std::this_thread::sleep_for(idle_period);
+                std::this_thread::sleep_until(wake_up_point);
+                time_point post_sync_point = wall_clock::now();
 
-                post_sync_point = steady_clock::now();
+                // Spin
+                while (post_sync_point < sync_point) {
+                    std::this_thread::yield();
+                    post_sync_point = wall_clock::now();
+                }
 
-                m_overslept_period = post_sync_point - pre_sync_point - idle_period;
+                nanoseconds const sync_period = post_sync_point - pre_sync_point;
+
+                m_overslept_period = sync_period - idle_period;
+                m_last_frame_point.emplace(post_sync_point);
             } else {
                 m_overslept_period = nanoseconds{};
+                m_last_frame_point.emplace(pre_sync_point);
             }
-
-            m_last_frame_point.emplace(post_sync_point);
         }
     }
 
@@ -80,8 +102,14 @@ private:
     /// @brief Remainder ticks left out from ticks_per_frame
     std::uint64_t const m_rem_ticks_per_frame;
 
+    /// @brief The threshold where spin loop start
+    nanoseconds const m_spin_threshold;
+
     /// @brief Elapsed tick in current frame
     std::uint64_t m_frame_ticks;
+
+    /// @brief Elapsed sub tick in current frame
+    std::uint64_t m_sub_frame_ticks;
 
     /// @brief Overslept period that needs to be compesated later 
     nanoseconds m_overslept_period;
@@ -89,4 +117,25 @@ private:
     /// @brief The last frame synchronization time point
     std::optional<time_point> m_last_frame_point;
 };
+
+Syncer::Syncer(std::uint64_t const clock_rate, std::uint64_t const frame_rate, Syncer::Strategy strat)
+    : m_pimpl{std::make_unique<Syncer::Impl>(clock_rate, frame_rate, [strat]() -> nanoseconds {
+        switch (strat) {
+        case Syncer::Strategy::Sleep:
+            return nanoseconds{};
+        case Syncer::Strategy::Spin:
+            return nanoseconds{std::numeric_limits<std::int64_t>::max()};
+        case Syncer::Strategy::Hybrid:
+            return nanoseconds{2'000'000};
+        }
+        return nanoseconds{};
+    }())} {
+}
+
+Syncer::~Syncer() = default;
+
+void Syncer::elapse(std::uint64_t const ticks) {
+    m_pimpl->elapse(ticks);
+}
+
 }

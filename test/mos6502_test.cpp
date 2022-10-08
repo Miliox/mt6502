@@ -1,15 +1,18 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <iomanip>
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <thread>
 
 #include "mos6502/bus.hpp"
 #include "mos6502/cpu.hpp"
 #include "mos6502/regs.hpp"
 #include "mos6502/status.hpp"
+#include "mos6502/syncer.hpp"
 
 class MockBus final : public mos6502::IBus {
 public:
@@ -1802,4 +1805,91 @@ TEST_CASE_METHOD(CpuFixture, "Instruction Test", "[BVS,BVC]" ) {
 
     REQUIRE(cpu.step() == 2U);
     REQUIRE(cpu.regs().pc == 2U);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Sleep]") {
+    mock_bus->mockAddressValue(0x00, 0xA9); // LDA
+    mock_bus->mockAddressValue(0x01, 0x50); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x69); // ADC
+    mock_bus->mockAddressValue(0x03, 0x10); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x4C); // JMP
+    mock_bus->mockAddressValue(0x05, 0x00); // ABS,LO
+    mock_bus->mockAddressValue(0x06, 0x00); // ABS,HI
+
+    std::uint64_t const ntsc_clock_rate = 3'579'545;
+    std::uint64_t const atari_clock_rate = ntsc_clock_rate / 3U;
+    std::uint64_t const one_minute_ticks = 10 * atari_clock_rate;
+    mos6502::Syncer syncer{atari_clock_rate, 60U, mos6502::Syncer::Strategy::Sleep};
+
+    std::uint64_t elapsed_ticks{};
+    auto const start_time_point = std::chrono::steady_clock::now();
+    do {
+        std::uint8_t const ticks = cpu.step();
+        elapsed_ticks += ticks;
+        syncer.elapse(ticks);
+    } while (elapsed_ticks < one_minute_ticks);
+    auto const stop_time_point = std::chrono::steady_clock::now();
+    auto const delta_time = stop_time_point - start_time_point;
+
+    printf("Elapsed time (Sleep):  %lld\n", delta_time.count() - 10'000'000'000);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Hybrid]") {
+    mock_bus->mockAddressValue(0x00, 0xA9); // LDA
+    mock_bus->mockAddressValue(0x01, 0x50); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x69); // ADC
+    mock_bus->mockAddressValue(0x03, 0x10); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x4C); // JMP
+    mock_bus->mockAddressValue(0x05, 0x00); // ABS,LO
+    mock_bus->mockAddressValue(0x06, 0x00); // ABS,HI
+
+    std::uint64_t const ntsc_clock_rate = 3'579'545;
+    std::uint64_t const atari_clock_rate = ntsc_clock_rate / 3U;
+    std::uint64_t const one_minute_ticks = 10 * atari_clock_rate;
+    mos6502::Syncer syncer{atari_clock_rate, 60U, mos6502::Syncer::Strategy::Hybrid};
+
+    std::uint64_t elapsed_ticks{};
+    auto const start_time_point = std::chrono::steady_clock::now();
+    do {
+        std::uint8_t const ticks = cpu.step();
+        elapsed_ticks += ticks;
+        syncer.elapse(ticks);
+    } while (elapsed_ticks < one_minute_ticks);
+    auto const stop_time_point = std::chrono::steady_clock::now();
+    auto const delta_time = stop_time_point - start_time_point;
+
+    printf("Elapsed time (Hybrid): %lld\n", delta_time.count() - 10'000'000'000);
+}
+
+TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Spin]") {
+    mock_bus->mockAddressValue(0x00, 0xA9); // LDA
+    mock_bus->mockAddressValue(0x01, 0x50); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x69); // ADC
+    mock_bus->mockAddressValue(0x03, 0x10); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x4C); // JMP
+    mock_bus->mockAddressValue(0x05, 0x00); // ABS,LO
+    mock_bus->mockAddressValue(0x06, 0x00); // ABS,HI
+
+    std::uint64_t const ntsc_clock_rate = 3'579'545;
+    std::uint64_t const atari_clock_rate = ntsc_clock_rate / 3U;
+    std::uint64_t const one_minute_ticks = 10 * atari_clock_rate;
+    mos6502::Syncer syncer{atari_clock_rate, 60U, mos6502::Syncer::Strategy::Spin};
+
+    std::uint64_t elapsed_ticks{};
+    auto const start_time_point = std::chrono::steady_clock::now();
+    do {
+        std::uint8_t const ticks = cpu.step();
+        elapsed_ticks += ticks;
+        syncer.elapse(ticks);
+    } while (elapsed_ticks < one_minute_ticks);
+    auto const stop_time_point = std::chrono::steady_clock::now();
+    auto const delta_time = stop_time_point - start_time_point;
+
+    printf("Elapsed time (Spin):   %lld\n", delta_time.count() - 10'000'000'000);
 }
