@@ -13,6 +13,7 @@
 #include "mos6502/regs.hpp"
 #include "mos6502/status.hpp"
 #include "mos6502/syncer.hpp"
+#include "mos6502/high_precision_syncer.hpp"
 
 class MockBus final : public mos6502::IBus {
 public:
@@ -1833,7 +1834,7 @@ TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Sleep]") {
     auto const stop_time_point = std::chrono::steady_clock::now();
     auto const delta_time = stop_time_point - start_time_point;
 
-    printf("Elapsed time (Sleep):  %lld\n", delta_time.count() - 10'000'000'000);
+    printf("Elapsed time (Sleep):  %lld (%lld)\n", delta_time.count() - 10'000'000'000, syncer.jitter_total_time().count() / static_cast<std::int64_t>(syncer.frame_count()));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Hybrid]") {
@@ -1862,7 +1863,7 @@ TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Hybrid]") {
     auto const stop_time_point = std::chrono::steady_clock::now();
     auto const delta_time = stop_time_point - start_time_point;
 
-    printf("Elapsed time (Hybrid): %lld\n", delta_time.count() - 10'000'000'000);
+    printf("Elapsed time (Hybrid): %lld (%lld)\n", delta_time.count() - 10'000'000'000, syncer.jitter_total_time().count() / static_cast<std::int64_t>(syncer.frame_count()));
 }
 
 TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Spin]") {
@@ -1891,5 +1892,37 @@ TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[Spin]") {
     auto const stop_time_point = std::chrono::steady_clock::now();
     auto const delta_time = stop_time_point - start_time_point;
 
-    printf("Elapsed time (Spin):   %lld\n", delta_time.count() - 10'000'000'000);
+    printf("Elapsed time (Spin):   %lld (%lld)\n", delta_time.count() - 10'000'000'000, syncer.jitter_total_time().count() / static_cast<std::int64_t>(syncer.frame_count()));
+}
+
+TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[HighPrecisionSyncer]") {
+    mock_bus->mockAddressValue(0x00, 0xA9); // LDA
+    mock_bus->mockAddressValue(0x01, 0x50); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x69); // ADC
+    mock_bus->mockAddressValue(0x03, 0x10); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x4C); // JMP
+    mock_bus->mockAddressValue(0x05, 0x00); // ABS,LO
+    mock_bus->mockAddressValue(0x06, 0x00); // ABS,HI
+
+    std::uint64_t const ntsc_clock_rate = 3'579'545;
+    std::uint64_t const atari_clock_rate = ntsc_clock_rate / 3U;
+    mos6502::HighPrecisionSyncer syncer{atari_clock_rate, 60U};
+
+    auto const start_time_point = std::chrono::steady_clock::now();
+    syncer.elapse(0U);
+    do {
+        std::uint8_t const ticks = cpu.step();
+        syncer.elapse(ticks);
+    } while (syncer.frame_count() < 600);
+    auto const stop_time_point = std::chrono::steady_clock::now();
+    auto const delta_time = stop_time_point - start_time_point;
+
+    printf("HighPrecisionSyncer: %lld\n", delta_time.count() - 10'000'000'000);
+    printf("HighPrecisionSyncer: %lf\n", (syncer.timestamp_of_last_frame() - syncer.timestamp_of_first_frame()) / 1e9);
+
+    REQUIRE(delta_time > (std::chrono::seconds{10} - std::chrono::microseconds{1}));
+    REQUIRE(delta_time < (std::chrono::seconds{10} + std::chrono::microseconds{1}));
+    REQUIRE((syncer.total_ticks() / atari_clock_rate) == 10);
 }
