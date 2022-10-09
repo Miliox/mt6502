@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <cerrno>
+#include <thread>
 
 #if defined(__APPLE__) || defined(__linux__)
 #include <sys/time.h>
@@ -112,6 +113,30 @@ void ClockSync::elapse(std::uint8_t ticks) {
 
                 while(nanosleep(&request, &remain) == -1 && errno == EINTR);
                 m_frame_last_ts = now();
+            }
+            break;
+        case SyncPrecision::Medium:
+            if (ts < m_frame_next_ts) {
+                auto delay_period = static_cast<std::int64_t>(m_frame_next_ts);
+                delay_period -= static_cast<std::int64_t>(now());
+
+                auto div_result = lldiv(delay_period, 1'000'000'000);
+                timespec request{div_result.quot, div_result.rem};
+                timespec remain{0U, 0U};
+
+                // Thread sleep until near point of wake up imprecision
+                constexpr decltype(request.tv_nsec) kThreshold = 2'000'000;
+                if (request.tv_nsec >= kThreshold) {
+                    request.tv_nsec -= kThreshold;
+                    while(nanosleep(&request, &remain) == -1 && errno == EINTR);
+                }
+
+                // Snooze last few milliseconds
+                do {
+                    std::this_thread::yield();
+                    ts = now();
+                } while (ts < m_frame_next_ts);
+                m_frame_last_ts = ts;
             }
             break;
         }

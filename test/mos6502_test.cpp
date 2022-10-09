@@ -1851,8 +1851,8 @@ TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[HighPrecisionSyncer]") {
         (syncer.timestamp_of_last_frame() - syncer.timestamp_of_first_frame()) / 1e9,
         thread_cpu_time / 1e9);
 
-    REQUIRE(delta_time > (std::chrono::seconds{10} - std::chrono::microseconds{2}));
-    REQUIRE(delta_time < (std::chrono::seconds{10} + std::chrono::microseconds{2}));
+    CHECK(delta_time > (std::chrono::seconds{10} - std::chrono::microseconds{2}));
+    CHECK(delta_time < (std::chrono::seconds{10} + std::chrono::microseconds{2}));
     REQUIRE((syncer.total_ticks() / atari_clock_rate) == 10);
 }
 
@@ -1900,7 +1900,57 @@ TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[LowPrecisionSyncer]") {
         (syncer.timestamp_of_last_frame() - syncer.timestamp_of_first_frame()) / 1e9,
         thread_cpu_time / 1e9);
 
-    REQUIRE(delta_time > (std::chrono::seconds{10} - std::chrono::milliseconds{15}));
-    REQUIRE(delta_time < (std::chrono::seconds{10} + std::chrono::milliseconds{15}));
+    CHECK(delta_time > (std::chrono::seconds{10} - std::chrono::milliseconds{15}));
+    CHECK(delta_time < (std::chrono::seconds{10} + std::chrono::milliseconds{15}));
+    REQUIRE((syncer.total_ticks() / atari_clock_rate) == 10);
+}
+
+
+TEST_CASE_METHOD(CpuFixture, "Emulate clock rate", "[MedPrecisionSyncer]") {
+    mock_bus->mockAddressValue(0x00, 0xA9); // LDA
+    mock_bus->mockAddressValue(0x01, 0x50); // IMM
+
+    mock_bus->mockAddressValue(0x02, 0x69); // ADC
+    mock_bus->mockAddressValue(0x03, 0x10); // IMM
+
+    mock_bus->mockAddressValue(0x04, 0x4C); // JMP
+    mock_bus->mockAddressValue(0x05, 0x00); // ABS,LO
+    mock_bus->mockAddressValue(0x06, 0x00); // ABS,HI
+
+    std::uint64_t const ntsc_clock_rate = 3'579'545;
+    std::uint64_t const atari_clock_rate = ntsc_clock_rate / 3U;
+    mos6502::ClockSync syncer{atari_clock_rate, 60U, mos6502::ClockSync::SyncPrecision::Medium};
+
+    timespec thread_cpu_time_before{};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_cpu_time_before);
+
+    auto const start_time_point = std::chrono::steady_clock::now();
+    syncer.elapse(0U);
+    do {
+        std::uint8_t const ticks = cpu.step();
+        syncer.elapse(ticks);
+    } while (syncer.frame_count() < 600);
+    auto const stop_time_point = std::chrono::steady_clock::now();
+
+    timespec thread_cpu_time_after{};
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &thread_cpu_time_after);
+
+    std::uint64_t const thread_cpu_time = (
+        static_cast<std::uint64_t>(thread_cpu_time_after.tv_sec * 1'000'000'000U) +
+        static_cast<std::uint64_t>(thread_cpu_time_after.tv_nsec)
+        ) - (
+        static_cast<std::uint64_t>(thread_cpu_time_before.tv_sec * 1'000'000'000U) +
+        static_cast<std::uint64_t>(thread_cpu_time_before.tv_nsec)
+    );
+
+    auto const delta_time = stop_time_point - start_time_point;
+
+    printf("ClockSync (Med):\n\tdeviation=%lld\n\tlast_ts=%lf\n\tthread_cpu_time=%lf\n",
+        delta_time.count() - 10'000'000'000,
+        (syncer.timestamp_of_last_frame() - syncer.timestamp_of_first_frame()) / 1e9,
+        thread_cpu_time / 1e9);
+
+    CHECK(delta_time > (std::chrono::seconds{10} - std::chrono::microseconds{900}));
+    CHECK(delta_time < (std::chrono::seconds{10} + std::chrono::microseconds{900}));
     REQUIRE((syncer.total_ticks() / atari_clock_rate) == 10);
 }

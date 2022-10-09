@@ -9,7 +9,9 @@ public:
     enum class SyncPrecision : std::uint64_t {
         // Few milliseconds precision with low cpu usage.
         Low,
-        /// Under microsecond precision with high cpu usage.
+        // Under millisecond precision with slightly more cpu usage (~10%) than SyncPrecision::Low.
+        Medium,
+        /// Under microsecond precision with full cpu usage.
         High
     };
 
