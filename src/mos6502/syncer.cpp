@@ -27,6 +27,10 @@ public:
         , m_sub_frame_ticks{}
         , m_overslept_period{}
         , m_last_frame_point{}
+        , m_frame_count{}
+        , m_busy_total_time{}
+        , m_idle_total_time{}
+        , m_jitter_total_time{}
         {
             assert(spin_threshold.count() >= 0);
             static_cast<void>(m_clock_rate);
@@ -45,6 +49,7 @@ public:
         // Frame sync
         if (m_frame_ticks >= m_ticks_per_frame) {
             m_frame_ticks -= m_ticks_per_frame;
+            m_frame_count += 1;
 
             std::uint64_t const sub_frames = std::min(m_sub_frame_ticks, m_frame_ticks);
             m_sub_frame_ticks -= sub_frames;
@@ -62,6 +67,9 @@ public:
 
             time_point const wake_up_point = sync_point - m_spin_threshold;
 
+            m_busy_total_time += busy_period;
+            m_idle_total_time += idle_period;
+
             if (idle_period.count() > 0) {
                 std::this_thread::sleep_until(wake_up_point);
                 time_point post_sync_point = wall_clock::now();
@@ -75,12 +83,30 @@ public:
                 nanoseconds const sync_period = post_sync_point - pre_sync_point;
 
                 m_overslept_period = sync_period - idle_period;
+
+                m_jitter_total_time += m_overslept_period;
                 m_last_frame_point.emplace(post_sync_point);
             } else {
                 m_overslept_period = nanoseconds{};
                 m_last_frame_point.emplace(pre_sync_point);
             }
         }
+    }
+
+    std::uint64_t frame_count() const {
+        return m_frame_count;
+    }
+
+    nanoseconds busy_total_time() const {
+        return m_busy_total_time;
+    }
+
+    nanoseconds idle_total_time() const {
+        return m_idle_total_time;
+    }
+
+    nanoseconds jitter_total_time() const {
+        return m_jitter_total_time;;
     }
 
 private:
@@ -116,6 +142,11 @@ private:
 
     /// @brief The last frame synchronization time point
     std::optional<time_point> m_last_frame_point;
+
+    std::uint64_t m_frame_count;
+    nanoseconds m_busy_total_time;
+    nanoseconds m_idle_total_time;
+    nanoseconds m_jitter_total_time;
 };
 
 Syncer::Syncer(std::uint64_t const clock_rate, std::uint64_t const frame_rate, Syncer::Strategy strat)
@@ -136,6 +167,22 @@ Syncer::~Syncer() = default;
 
 void Syncer::elapse(std::uint64_t const ticks) {
     m_pimpl->elapse(ticks);
+}
+
+std::uint64_t Syncer::frame_count() const {
+    return m_pimpl->frame_count();
+}
+
+std::chrono::nanoseconds Syncer::busy_total_time() const {
+    return m_pimpl->busy_total_time();
+}
+
+std::chrono::nanoseconds Syncer::idle_total_time() const {
+    return m_pimpl->idle_total_time();
+}
+
+std::chrono::nanoseconds Syncer::jitter_total_time() const {
+    return m_pimpl->jitter_total_time();
 }
 
 }

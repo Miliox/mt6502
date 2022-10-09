@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <cstdint>
 #include <memory>
 
@@ -44,6 +45,14 @@ public:
     ///        when ticks goes over target rate
     /// @param ticks the ammount of ticks elapsed
     void elapse(std::uint64_t const ticks);
+
+    std::uint64_t frame_count() const;
+
+    std::chrono::nanoseconds busy_total_time() const;
+
+    std::chrono::nanoseconds idle_total_time() const;
+
+    std::chrono::nanoseconds jitter_total_time() const;
 
 private:
     class Impl;
