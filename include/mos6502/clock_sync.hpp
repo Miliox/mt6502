@@ -4,17 +4,26 @@
 namespace mos6502
 {
 
-class HighPrecisionSyncer final {
+class ClockSync final {
 public:
-    HighPrecisionSyncer(
-        std::uint64_t const clock_rate,
-        std::uint64_t const frame_rate);
+    enum class SyncPrecision : std::uint64_t {
+        // Few milliseconds precision with low cpu usage.
+        Low,
+        /// Under microsecond precision with high cpu usage.
+        High
+    };
 
-    HighPrecisionSyncer(
+    ClockSync(
+        std::uint64_t const clock_rate,
+        std::uint64_t const frame_rate,
+        SyncPrecision const sync_precision = SyncPrecision::Low);
+
+    ClockSync(
         std::uint64_t const clock_rate,
         std::uint64_t const clock_rate_fraction,
         std::uint64_t const frame_rate,
-        std::uint64_t const frame_rate_fraction);
+        std::uint64_t const frame_rate_fraction,
+        SyncPrecision const sync_precision = SyncPrecision::Low);
 
     void elapse(std::uint8_t ticks);
 
@@ -47,11 +56,13 @@ private:
     std::uint64_t const m_frame_period_fraction;
     std::uint64_t const m_ticks_per_frame;
     std::uint64_t const m_ticks_per_frame_fraction;
+    SyncPrecision const m_sync_precision;
 
     std::uint64_t m_frame_count;
     std::uint64_t m_frame_ticks;
     std::uint64_t m_frame_ticks_fraction;
     std::uint64_t m_frame_first_ts;
+    std::uint64_t m_frame_next_ts;
     std::uint64_t m_frame_last_ts;
 
     std::uint64_t m_busy_period;

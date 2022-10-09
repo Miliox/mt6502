@@ -1,4 +1,7 @@
-#include "mos6502/high_precision_syncer.hpp"
+#include "mos6502/clock_sync.hpp"
+
+#include <cstdlib>
+#include <cerrno>
 
 #if defined(__APPLE__) || defined(__linux__)
 #include <sys/time.h>
@@ -25,23 +28,28 @@ static __attribute__((always_inline)) std::uint64_t now() {
 static_assert(false, "unsupported operation system");
 #endif
 
-HighPrecisionSyncer::HighPrecisionSyncer(
+ClockSync::ClockSync(
         std::uint64_t const clock_rate,
-        std::uint64_t const frame_rate)
-        : HighPrecisionSyncer(clock_rate, 0U, frame_rate, 0U) {}
+        std::uint64_t const frame_rate,
+        SyncPrecision const sync_precision)
+        : ClockSync(clock_rate, 0U, frame_rate, 0U, sync_precision) {}
 
-HighPrecisionSyncer::HighPrecisionSyncer(
+ClockSync::ClockSync(
     std::uint64_t const clock_rate,
     std::uint64_t const clock_rate_fraction,
     std::uint64_t const frame_rate,
-    std::uint64_t const frame_rate_fraction)
+    std::uint64_t const frame_rate_fraction,
+    SyncPrecision const sync_precision)
     : m_frame_period{1'000'000'000U / frame_rate}
     , m_frame_period_fraction{1'000'000'000U % frame_rate}
     , m_ticks_per_frame{clock_rate / frame_rate}
     , m_ticks_per_frame_fraction{clock_rate % frame_rate}
+    , m_sync_precision(sync_precision)
     , m_frame_count{}
     , m_frame_ticks{}
     , m_frame_ticks_fraction{}
+    , m_frame_first_ts{}
+    , m_frame_next_ts{}
     , m_frame_last_ts{}
     , m_busy_period{}
     , m_idle_period{}
@@ -56,9 +64,10 @@ HighPrecisionSyncer::HighPrecisionSyncer(
     static_cast<void>(m_frame_ticks_fraction);
 }
 
-void HighPrecisionSyncer::elapse(std::uint8_t ticks) {
+void ClockSync::elapse(std::uint8_t ticks) {
     if (m_frame_last_ts == 0U) {
         m_frame_first_ts = now();
+        m_frame_next_ts = m_frame_first_ts;
         m_frame_last_ts = m_frame_first_ts;
     }
 
@@ -81,15 +90,34 @@ void HighPrecisionSyncer::elapse(std::uint8_t ticks) {
         m_frame_ticks -= m_ticks_per_frame;
         m_frame_ticks_fraction = m_ticks_per_frame_fraction;
 
-        std::uint64_t const next_frame_ts = m_frame_last_ts + m_frame_period;
+        m_frame_next_ts = m_frame_next_ts + m_frame_period;
         std::uint64_t ts = now();
         std::uint64_t const busy_idle_transition_ts = ts;
-        while (ts < next_frame_ts) {
-            ts = now();
+
+        switch (m_sync_precision) {
+        case SyncPrecision::High:
+            while (ts < m_frame_next_ts) {
+                ts = now();
+            }
+            m_frame_last_ts = ts;
+            break;
+        case SyncPrecision::Low:
+            if (ts < m_frame_next_ts) {
+                auto delay_period = static_cast<std::int64_t>(m_frame_next_ts);
+                delay_period -= static_cast<std::int64_t>(now());
+
+                auto div_result = lldiv(delay_period, 1'000'000'000);
+                timespec request{div_result.quot, div_result.rem};
+                timespec remain{0U, 0U};
+
+                while(nanosleep(&request, &remain) == -1 && errno == EINTR);
+                m_frame_last_ts = now();
+            }
+            break;
         }
+
         m_busy_period += busy_idle_transition_ts - m_frame_last_ts;
-        m_idle_period += next_frame_ts - busy_idle_transition_ts;
-        m_frame_last_ts = next_frame_ts;
+        m_idle_period += m_frame_next_ts - busy_idle_transition_ts;
     }
 }
 
