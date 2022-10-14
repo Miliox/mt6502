@@ -98,6 +98,7 @@ void ClockSync::elapse(std::uint8_t ticks) {
         switch (m_sync_precision) {
         case SyncPrecision::High:
             while (ts < m_frame_next_ts) {
+                __asm__ __volatile__("pause");
                 ts = now();
             }
             m_frame_last_ts = ts;
