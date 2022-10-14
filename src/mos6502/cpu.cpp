@@ -10,6 +10,14 @@
 #include "mos6502/regs.hpp"
 #include "mos6502/status.hpp"
 
+#if defined(__GNUC__) || defined(__clang__)
+#define FORCEINLINE __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define FORCEINLINE __forceinline
+#else
+static_assert(false, "");
+#endif
+
 // @see https://llx.com/Neil/a2/opcodes.html
 union Instruction
 {
@@ -175,10 +183,6 @@ public:
         m_dispatch[0xC4] = &Cpu::Impl::cpy;
         m_dispatch[0xCC] = &Cpu::Impl::cpy;
 
-        m_dispatch[0xD5] = &Cpu::Impl::cmp;
-        m_dispatch[0xD9] = &Cpu::Impl::cmp;
-        m_dispatch[0xDD] = &Cpu::Impl::cmp;
-
         m_dispatch[0xC6] = &Cpu::Impl::dec;
         m_dispatch[0xCE] = &Cpu::Impl::dec;
         m_dispatch[0xD6] = &Cpu::Impl::dec;
@@ -328,42 +332,42 @@ private:
         throw std::runtime_error(ss.str());
     }
 
-    void brk() {
+    void brk() FORCEINLINE {
         request_interrupt(0xFFFE, true);
     }
 
-    void clc() {
+    void clc() FORCEINLINE {
         m_regs.sr &= ~C;
     }
 
-    void cld() {
+    void cld() FORCEINLINE {
         m_regs.sr &= ~D;
     }
 
-    void cli() {
+    void cli() FORCEINLINE {
         m_regs.sr &= ~I;
     }
 
-    void clv() {
+    void clv() FORCEINLINE {
         m_regs.sr &= ~V;
     }
 
-    void sec() {
+    void sec() FORCEINLINE {
         m_regs.sr |= C;
     }
 
-    void sed() {
+    void sed() FORCEINLINE {
         m_regs.sr |= D;
     }
 
-    void sei() {
+    void sei() FORCEINLINE {
         m_regs.sr |= I;
     }
 
-    void nop() {
+    void nop() FORCEINLINE {
     }
 
-    void adc() {
+    void adc() FORCEINLINE {
         // compute with signed values to set overflow flag in native x86
         std::int8_t acc{static_cast<std::int8_t>(m_regs.ac)};
         std::int8_t mem{static_cast<std::int8_t>(read_instruction_input())};
@@ -410,7 +414,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void sbc() {
+    void sbc() FORCEINLINE {
         // compute with signed values to set overflow flag in native x86
         std::int8_t acc{static_cast<std::int8_t>(m_regs.ac)};
         std::int8_t mem{static_cast<std::int8_t>(read_instruction_input())};
@@ -441,7 +445,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void amd() {
+    void amd() FORCEINLINE {
         std::uint8_t acc{m_regs.ac};
         std::uint8_t mem{read_instruction_input()};
         std::uint8_t res{};
@@ -458,7 +462,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void bit() {
+    void bit() FORCEINLINE {
         std::uint8_t acc{m_regs.ac};
         std::uint8_t mem{read_instruction_input()};
 
@@ -471,7 +475,7 @@ private:
         m_regs.sr = (m_regs.sr & 0x3D) | (mem & 0xC0) | ((z_out << 1) & 0x02);
     }
 
-    void eor() {
+    void eor() FORCEINLINE {
         std::uint8_t acc{m_regs.ac};
         std::uint8_t mem{read_instruction_input()};
         std::uint8_t res{};
@@ -488,7 +492,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void ora() {
+    void ora() FORCEINLINE {
         std::uint8_t acc{m_regs.ac};
         std::uint8_t mem{read_instruction_input()};
         std::uint8_t res{};
@@ -505,7 +509,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void cmp() {
+    void cmp() FORCEINLINE {
         std::uint8_t acc{m_regs.ac};
         std::uint8_t mem{read_instruction_input()};
 
@@ -523,7 +527,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void cpx() {
+    void cpx() FORCEINLINE {
         std::uint8_t idx{m_regs.xi};
         std::uint8_t mem{read_instruction_input()};
 
@@ -541,7 +545,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void cpy() {
+    void cpy() FORCEINLINE {
         std::uint8_t idy{m_regs.yi};
         std::uint8_t mem{read_instruction_input()};
 
@@ -559,7 +563,7 @@ private:
         set_if(z_out, Z);
     }
 
-    void dec() {
+    void dec() FORCEINLINE {
         std::uint8_t mem{read_instruction_input()};
 
         mem -= 1U;
@@ -569,19 +573,19 @@ private:
         write_instruction_output(mem);
     }
 
-    void dex() {
+    void dex() FORCEINLINE {
         m_regs.xi -= 1U;
         set_if(m_regs.xi >= 0x80, N);
         set_if(m_regs.xi == 0x00, Z);
     }
 
-    void dey() {
+    void dey() FORCEINLINE {
         m_regs.yi -= 1U;
         set_if(m_regs.yi >= 0x80, N);
         set_if(m_regs.yi == 0x00, Z);
     }
 
-    void inc() {
+    void inc() FORCEINLINE {
         std::uint8_t mem{read_instruction_input()};
 
         mem += 1U;
@@ -591,85 +595,85 @@ private:
         write_instruction_output(mem);
     }
 
-    void inx() {
+    void inx() FORCEINLINE {
         m_regs.xi += 1U;
         set_if(m_regs.xi >= 0x80, N);
         set_if(m_regs.xi == 0x00, Z);
     }
 
-    void iny() {
+    void iny() FORCEINLINE {
         m_regs.yi += 1U;
         set_if(m_regs.yi >= 0x80, N);
         set_if(m_regs.yi == 0x00, Z);
     }
 
-    void lda() {
+    void lda() FORCEINLINE {
         m_regs.ac = read_instruction_input();
         set_if(m_regs.ac >= 128U, N);
         set_if(m_regs.ac == 0U,   Z);
     }
 
-    void ldx() {
+    void ldx() FORCEINLINE {
         m_regs.xi = read_instruction_input();
         set_if(m_regs.xi >= 128U, N);
         set_if(m_regs.xi == 0U,   Z);
     }
 
-    void ldy() {
+    void ldy() FORCEINLINE {
         m_regs.yi = read_instruction_input();
         set_if(m_regs.yi >= 128U, N);
         set_if(m_regs.yi == 0U,   Z);
     }
 
-    void sta() {
+    void sta() FORCEINLINE {
         write_instruction_output(m_regs.ac);
     }
 
-    void stx() {
+    void stx() FORCEINLINE {
         write_instruction_output(m_regs.xi);
     }
 
-    void sty() {
+    void sty() FORCEINLINE {
         write_instruction_output(m_regs.yi);
     }
 
-    void tax() {
+    void tax()FORCEINLINE {
         m_regs.xi = m_regs.ac;
         set_if(m_regs.xi >= 0x80, N);
         set_if(m_regs.xi == 0x00, Z);
     }
 
-    void tay() {
+    void tay() FORCEINLINE {
         m_regs.yi = m_regs.ac;
         set_if(m_regs.yi >= 0x80, N);
         set_if(m_regs.yi == 0x00, Z);
     }
 
-    void tsx() {
+    void tsx() FORCEINLINE {
         m_regs.xi = (m_regs.sp & 0x00FF);
         set_if(m_regs.xi >= 0x80, N);
         set_if(m_regs.xi == 0x00, Z);
     }
 
-    void txa() {
+    void txa() FORCEINLINE {
         m_regs.ac = m_regs.xi;
         set_if(m_regs.ac >= 0x80, N);
         set_if(m_regs.ac == 0x00, Z);
     }
 
-    void txs() {
+    void txs() FORCEINLINE {
         m_regs.sp = (m_regs.sp & 0xFF00) | m_regs.xi;
         set_if(m_regs.xi >= 0x80, N);
         set_if(m_regs.xi == 0x00, Z);
     }
 
-    void tya() {
+    void tya()FORCEINLINE {
         m_regs.ac = m_regs.yi;
         set_if(m_regs.ac >= 0x80, N);
         set_if(m_regs.ac == 0x00, Z);
     }
 
-    void asl() {
+    void asl() FORCEINLINE {
         std::uint8_t mem{read_instruction_input()};
 
         set_if(mem >= 0x80, C);
@@ -680,7 +684,7 @@ private:
         write_instruction_output(mem);
     }
 
-    void lsr() {
+    void lsr() FORCEINLINE {
         std::uint8_t mem{read_instruction_input()};
 
         set_if(static_cast<bool>(mem & 1), C);
@@ -691,7 +695,7 @@ private:
         write_instruction_output(mem);
     }
 
-    void rol() {
+    void rol() FORCEINLINE {
         std::uint8_t mem{read_instruction_input()};
 
         std::uint8_t carry_in{static_cast<bool>(m_regs.sr & C) ? std::uint8_t{1} : std::uint8_t{0}};
@@ -707,7 +711,7 @@ private:
         write_instruction_output(mem);
     }
 
-    void ror() {
+    void ror()FORCEINLINE {
         std::uint8_t mem{read_instruction_input()};
 
         std::uint8_t carry_in{static_cast<bool>(m_regs.sr & C) ? std::uint8_t{0x80} : std::uint8_t{0}};
@@ -723,30 +727,30 @@ private:
         write_instruction_output(mem);
     }
 
-    void pha() {
+    void pha() FORCEINLINE {
         push(m_regs.ac);
     }
 
-    void php() {
+    void php() FORCEINLINE {
         push(m_regs.sr);
     }
 
-    void pla() {
+    void pla() FORCEINLINE {
         m_regs.ac = pull();
         set_if(m_regs.ac >= 0x80, N);
         set_if(m_regs.ac == 0x00, Z);
     }
 
-    void plp() {
+    void plp() FORCEINLINE {
         m_regs.sr = (pull() & 0xCF) | (m_regs.sr & 0x30);
     }
 
-    void rti() {
+    void rti() FORCEINLINE {
         plp();
         rts();
     }
 
-    void jsr() {
+    void jsr() FORCEINLINE {
         std::uint8_t const pc_lo = (m_regs.pc >> 0) & 0xFF;
         std::uint8_t const pc_hi = (m_regs.pc >> 8) & 0xFF;
         push(pc_hi);
@@ -754,71 +758,71 @@ private:
         m_regs.pc = m_immediate16;
     }
 
-    void rts() {
+    void rts() FORCEINLINE {
         std::uint8_t const pc_lo = pull();
         std::uint8_t const pc_hi = pull();
         m_regs.pc = ((pc_hi << 8) & 0xFF00) | pc_lo;
     }
 
-    void jmp_abs() {
+    void jmp_abs() FORCEINLINE {
         m_regs.pc = m_immediate16;
     }
 
-    void jmp_ind() {
+    void jmp_ind() FORCEINLINE {
         std::uint8_t const pc_lo = m_bus->read(m_immediate16);
         std::uint8_t const pc_hi = m_bus->read(m_immediate16 + 1U);
         m_regs.pc = ((pc_hi << 8) & 0xFF00) | pc_lo;
     }
 
-    void bcc() {
+    void bcc() FORCEINLINE {
         if ((m_regs.sr & C) == 0) {
             jmp_rel();
         }
     }
 
-    void bcs() {
+    void bcs() FORCEINLINE {
         if ((m_regs.sr & C) == C) {
             jmp_rel();
         }
     }
 
-    void beq() {
+    void beq() FORCEINLINE {
         if ((m_regs.sr & Z) == Z) {
             jmp_rel();
         }
     }
 
-    void bne() {
+    void bne() FORCEINLINE {
         if ((m_regs.sr & Z) == 0) {
             jmp_rel();
         }
     }
 
-    void bmi() {
+    void bmi() FORCEINLINE {
         if ((m_regs.sr & N) == N) {
             jmp_rel();
         }
     }
 
-    void bpl() {
+    void bpl() FORCEINLINE {
         if ((m_regs.sr & N) == 0) {
             jmp_rel();
         }
     }
 
-    void bvs() {
+    void bvs() FORCEINLINE {
         if ((m_regs.sr & V) == V) {
             jmp_rel();
         }
     }
 
-    void bvc() {
+    void bvc() FORCEINLINE {
         if ((m_regs.sr & V) == 0) {
             jmp_rel();
         }
     }
 
-    inline void request_interrupt(std::uint16_t addr, bool software = false) {
+    inline void request_interrupt(std::uint16_t addr, bool software = false) FORCEINLINE {
         std::uint8_t const pc_lo = (m_regs.pc >> 0) & 0xFF;
         std::uint8_t const pc_hi = (m_regs.pc >> 8) & 0xFF;
 
@@ -845,21 +849,21 @@ private:
         m_regs.sr |= I;
     }
 
-    inline void jmp_rel() {
+    inline void jmp_rel() FORCEINLINE {
         *(reinterpret_cast<std::int16_t*>(&m_regs.pc)) += static_cast<std::int16_t>(static_cast<std::int8_t>(m_immediate8));
     }
 
-    inline void push(std::uint8_t const arg) {
+    inline void push(std::uint8_t const arg) FORCEINLINE {
         m_bus->write(m_regs.sp, arg);
         m_regs.sp = (m_regs.sp & 0xFF00) | (((m_regs.sp & 0xFF) - 1U) & 0xFF);
     }
 
-    inline std::uint8_t pull() {
+    inline std::uint8_t pull() FORCEINLINE {
         m_regs.sp = (m_regs.sp & 0xFF00) | ((m_regs.sp + 1U) & 0x00FF);
         return m_bus->read(m_regs.sp);
     }
 
-    inline void set_if(bool cond, std::uint8_t status) {
+    inline void set_if(bool cond, std::uint8_t status) FORCEINLINE {
         if (cond) {
             m_regs.sr |= status;
         } else {
@@ -867,7 +871,7 @@ private:
         }
     }
 
-    std::uint8_t read_instruction_input() {
+    std::uint8_t read_instruction_input() FORCEINLINE {
         // Declutter switch inside switch using goto
         switch (m_instruction.parts.group)
         {
@@ -983,7 +987,7 @@ private:
         throw std::runtime_error(ss.str());
     }
 
-    void write_instruction_output(std::uint8_t data) {
+    void write_instruction_output(std::uint8_t data) FORCEINLINE {
         // Declutter switch inside switch using goto
         switch (m_instruction.parts.group)
         {
