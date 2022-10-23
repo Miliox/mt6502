@@ -58,7 +58,41 @@ handler vector, etc are mapped in the correct address ranges.
                              ...
 ```
 
-Implement a memory mapping is necessary to class that inherit from mos6502::IBus.
+The classes in this library are:
+
+```mermaid
+classDiagram
+    Cpu ..* Registers : Memento
+    Cpu <.. ClockSync : Trottle speed
+    Cpu ..> IBus      : Access to MMU
+
+class ClockSync {
+    +elapse(uint8_t ticks)
+}
+
+class Cpu {
+    +step() uint8_t
+}
+
+class IBus {
+    <<Interface>>
+    +read(uint16_t addr) uint8_t
+    +write(uint16_t addr, uint8_t data) void
+}
+
+class Registers {
+    +uint8_t  ac
+    +uint8_t  xi
+    +uint8_t  yi
+    +uint8_t  sr
+    +uint16_t sp
+    +uint16_t pc
+}
+```
+
+Leaving the user of this library to implement a memory mapping by inherit from mos6502::IBus.
+
+This is done by declaring a MemoryMapper class like the one below:
 
 ```cpp
 // @file memory_mapper.hpp
@@ -84,16 +118,13 @@ Then when create the CPU pass the dependency to IBus in the constructor.
 ```cpp
 auto mm_map = std::make_shared<MemoryMapper>(/* ctor args */);
 
-mos6502::Cpu cpu{mm_bap};
+mos6502::Cpu cpu{mm_map};
 ```
 
 Run the cpu in a loop steping one instruction at time. Without any
 synchronization the cpu will run faster than the target emulation
 speed so use ClockSync to down speed to desired frequency and
 frame rate.
-
-
-To execute at the desired clock rate use ClockSync to
 
 ```cpp
 mos6502::ClockSync syncer{kClockPerSecond, kFramePerSecond};
