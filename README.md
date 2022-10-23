@@ -80,15 +80,30 @@ public:
 
 Then when create the CPU pass the dependency to IBus in the constructor.
 
+
 ```cpp
 auto mm_map = std::make_shared<MemoryMapper>(/* ctor args */);
 
 mos6502::Cpu cpu{mm_bap};
+```
+
+Run the cpu in a loop steping one instruction at time. Without any
+synchronization the cpu will run faster than the target emulation
+speed so use ClockSync to down speed to desired frequency and
+frame rate.
+
+
+To execute at the desired clock rate use ClockSync to
+
+```cpp
+mos6502::ClockSync syncer{kClockPerSecond, kFramePerSecond};
 
 for(;;) {
     auto cycles = cpu.step();
 
-    // ommitted
+    // ...
+
+    syncer.elapse(cycles);
 }
 ```
 
