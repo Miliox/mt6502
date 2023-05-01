@@ -50,6 +50,20 @@ int main(int argc, char** argv)
     auto benchmark = ankerl::nanobench::Bench();
     benchmark.minEpochIterations(2'000'000U);
 
+    {
+        std::shared_ptr<BenchBus> bus{new BenchBus{0xE0}};
+        std::shared_ptr<mos6502::IBus> ibus{bus};
+        benchmark.run("Direct Bus Read", [&] { static_cast<void>(bus->read(0x00)); });
+        benchmark.run("Virtual Bus Read", [&] { static_cast<void>(ibus->read(0x00)); });
+    }
+
+    {
+        std::shared_ptr<BenchBus> bus{new BenchBus{0xE0}};
+        std::shared_ptr<mos6502::IBus> ibus{bus};
+        benchmark.run("Direct Bus Write", [&] { static_cast<void>(bus->write(0x00, 0x00)); });
+        benchmark.run("Virtual Bus Write", [&] { static_cast<void>(ibus->write(0x00, 0x00)); });
+    }
+
     INSTRUCTION_BENCHMARK("BRK", 0x00);
     INSTRUCTION_BENCHMARK("BPL", 0x10);
     INSTRUCTION_BENCHMARK("JSR", 0x20);
