@@ -75,10 +75,12 @@ message(DEBUG "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 add_library(${PROJECT_NAME} src/mos6502/bus.cpp src/mos6502/cpu.cpp src/mos6502/clock_sync.cpp)
 target_include_directories(${PROJECT_NAME}  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
-add_executable(${PROJECT_NAME}_bench tools/bench/mos6502_bench.cpp)
-target_link_libraries(${PROJECT_NAME}_bench PRIVATE ${PROJECT_NAME} )
-
 find_package(doctest CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME}_test test/mos6502_test.cpp)
-target_link_libraries(${PROJECT_NAME}_test PRIVATE ${PROJECT_NAME}  doctest::doctest)
+target_link_libraries(${PROJECT_NAME}_test PRIVATE ${PROJECT_NAME} doctest::doctest)
+
+find_package(nanobench CONFIG REQUIRED)
+
+add_executable(${PROJECT_NAME}_bench test/mos6502_bench.cpp)
+target_link_libraries(${PROJECT_NAME}_bench PRIVATE ${PROJECT_NAME} nanobench::nanobench)

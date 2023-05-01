@@ -21,7 +21,7 @@ mkdir build
 export VCKPG_TOOLCHAIN_FILE=${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake
 
 # Install package dependencies
-${VCPKG_DIR}/vcpkg install doctest
+${VCPKG_DIR}/vcpkg install doctest nanobench
 
 # Generate Makefile
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=${VCPKG_TOOLCHAIN_FILE}
