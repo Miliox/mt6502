@@ -17,14 +17,14 @@ This is a working in progress, and there are missing features and bugs.
 # Create build directory
 mkdir build
 
-# Path to VCPKG toolchain for cmake
-export VCKPG_TOOLCHAIN_FILE=${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake
-
 # Install package dependencies
 ${VCPKG_DIR}/vcpkg install doctest nanobench
 
+# Path to VCPKG toolchain for cmake
+export VCKPG_TOOLCHAIN_FILE=${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake
+
 # Generate Makefile
-cmake -B build -DCMAKE_TOOLCHAIN_FILE=${VCPKG_TOOLCHAIN_FILE}
+cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=${VCPKG_TOOLCHAIN_FILE} -DCMAKE_BUILD_TYPE=Release
 
 # Build
 cmake --build build
@@ -32,8 +32,8 @@ cmake --build build
 # Unit Tests
 build/mt6502_test
 
-# Benchmark 1 million runs per instruction
-build/mt6502_bench 1000000
+# Benchmark
+build/mt6502_bench
 ```
 
 ## API
