@@ -20,11 +20,14 @@ mkdir build
 # Path to VCPKG toolchain for cmake
 export VCKPG_TOOLCHAIN_FILE=${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake
 
+# Install package dependencies
+${VCPKG_DIR}/vcpkg install doctest
+
 # Generate Makefile
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=${VCPKG_TOOLCHAIN_FILE}
 
 # Build
-make -C build
+cmake --build build
 
 # Unit Tests
 build/mt6502_test
