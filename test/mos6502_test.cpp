@@ -54,7 +54,7 @@ public:
 
 protected:
     std::shared_ptr<MockBus> m_bus{new MockBus{}};
-    mos6502::Cpu m_cpu{m_bus};
+    mos6502::Cpu<MockBus> m_cpu{m_bus};
 };
 
 CpuFixture::CpuFixture() {

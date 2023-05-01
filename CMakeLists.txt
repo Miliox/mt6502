@@ -72,7 +72,7 @@ endif()
 message(DEBUG "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(DEBUG "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
 
-add_library(${PROJECT_NAME} src/mos6502/bus.cpp src/mos6502/cpu.cpp src/mos6502/clock_sync.cpp)
+add_library(${PROJECT_NAME} src/mos6502/bus.cpp src/mos6502/clock_sync.cpp)
 target_include_directories(${PROJECT_NAME}  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
 find_package(doctest CONFIG REQUIRED)

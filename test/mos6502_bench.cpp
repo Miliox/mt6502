@@ -37,7 +37,7 @@ void BenchBus::write(std::uint16_t addr, std::uint8_t data) {
 #define INSTRUCTION_BENCHMARK(name, opcode) \
 { \
     std::shared_ptr<BenchBus> a_bus{new BenchBus{0xE0}}; \
-    std::shared_ptr<mos6502::Cpu>  a_cpu{new mos6502::Cpu{a_bus}}; \
+    std::shared_ptr<mos6502::Cpu<BenchBus>> a_cpu{new mos6502::Cpu<BenchBus>{a_bus}}; \
     std::stringstream title{}; \
     title << "instruction " << name; \
     benchmark.run(title.str(), [&] { a_cpu->step(); }); \
