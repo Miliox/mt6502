@@ -78,7 +78,7 @@ target_include_directories(${PROJECT_NAME}  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/inc
 add_executable(${PROJECT_NAME}_bench tools/bench/mos6502_bench.cpp)
 target_link_libraries(${PROJECT_NAME}_bench PRIVATE ${PROJECT_NAME} )
 
-find_package(Catch2 CONFIG REQUIRED)
+find_package(doctest CONFIG REQUIRED)
 
 add_executable(${PROJECT_NAME}_test test/mos6502_test.cpp)
-target_link_libraries(${PROJECT_NAME}_test PRIVATE ${PROJECT_NAME}  Catch2::Catch2WithMain)
+target_link_libraries(${PROJECT_NAME}_test PRIVATE ${PROJECT_NAME}  doctest::doctest)
