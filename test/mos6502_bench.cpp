@@ -38,9 +38,13 @@ void BenchBus::write(std::uint16_t addr, std::uint8_t data) {
 { \
     std::shared_ptr<BenchBus> a_bus{new BenchBus{0xE0}}; \
     std::shared_ptr<mos6502::Cpu<BenchBus>> a_cpu{new mos6502::Cpu<BenchBus>{a_bus}}; \
+    std::shared_ptr<mos6502::Cpu<mos6502::IBus>> a_vcpu{new mos6502::Cpu<mos6502::IBus>{a_bus}}; \
     std::stringstream title{}; \
-    title << "instruction " << name; \
+    title << "instruction " << name << " on concrete bus"; \
     benchmark.run(title.str(), [&] { a_cpu->step(); }); \
+    title = std::stringstream{}; \
+    title << "instruction " << name << " on virtual bus"; \
+    benchmark.run(title.str(), [&] { a_vcpu->step(); }); \
 } \
 
 int main(int argc, char** argv)
